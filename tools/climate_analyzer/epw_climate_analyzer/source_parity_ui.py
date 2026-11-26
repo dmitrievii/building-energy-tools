@@ -991,8 +991,9 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     analysis_interval = float(full_df.attrs.get("canonical_analysis_interval_minutes", 60.0))
     climate_area=getattr(legacy,"_r219_climate_area",st.sidebar)
     climate_area.write(f"**{prepared_dataset.location.city}, {prepared_dataset.location.country}**")
-    climate_area.caption(f"{prepared_dataset.provenance.provider} · {len(filtered_df):,} rows · {analysis_interval:g} min")
+    climate_area.caption(f"{prepared_dataset.provenance.provider} · {analysis_interval:g} min")
     if page=="Data Quality":
+        st.caption(f"Source rows loaded: {len(filtered_df):,}")
         st.caption(f"Source cadence {source_interval:g} min; analysis clock: {full_df.attrs.get('canonical_analysis_timezone_name',prepared_dataset.temporal.timezone_name)}")
 
     from .p6_report import set_context

@@ -105,7 +105,8 @@ class PublicationContractTests(unittest.TestCase):
     def test_public_app_exposes_beta_and_disclaimer_contract(self) -> None:
         app_source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
         self.assertIn("APP_RELEASE_LABEL", app_source)
-        self.assertIn('st.expander("About this beta"', app_source)
+        self.assertIn('st.expander("About", expanded=False)', app_source)
+        self.assertIn('with st.expander("About", expanded=False):\n        st.write(APP_RELEASE_LABEL)',app_source)
         self.assertIn("APP_ENGINEERING_DISCLAIMER", app_source)
         self.assertIn("APP_INDEPENDENCE_NOTICE", app_source)
 

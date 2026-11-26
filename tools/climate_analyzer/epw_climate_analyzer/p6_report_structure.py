@@ -175,6 +175,7 @@ def figure_height(fig,width_pt,height_pt):
 
 def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False):
     """Physical-size clone with chart-specific print reflow, preserving data/colors."""
+    from .chart_overrides import replay_chart_overrides,restore_canonical_labels
     raw=go.Figure(fig).to_plotly_json()
     px=font_pt*96/72
     def restyle(obj):
@@ -189,7 +190,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
         elif isinstance(obj,(list,tuple)):
             for v in obj:restyle(v)
     restyle(raw)
-    f=go.Figure(raw)
+    f=restore_canonical_labels(go.Figure(raw))
     from .extended_visualization import diurnal_panel_rows,reflow_diurnal_panels
     if diurnal_panel_rows(f):
         # Mark legacy saved snapshots before stripping the report title.
@@ -210,7 +211,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
     is_map=isinstance(f.layout.meta,dict) and f.layout.meta.get("report_kind")=="station_locator"
     if is_map:
         f.update_layout(margin=dict(l=8,r=8,t=8,b=8))
-        return f
+        return replay_chart_overrides(f,include_title=False)
     f.update_xaxes(automargin=True,tickfont_size=px,title_font_size=px)
     f.update_yaxes(automargin=True,tickfont_size=px,title_font_size=px)
     zones=zone_legend_entries(f)
@@ -232,7 +233,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
         small_font=max(9,min(12,px*.82))
         f.update_layout(margin=dict(l=18,r=18 if classes else 96,t=12,b=68 if classes else 18),
             legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.005,yanchor="bottom",font=dict(size=small_font),title=dict(font=dict(size=small_font))))
-        return reflow_monthly_wind_roses(f,columns=4 if w>h*1.12 else 3,font_size=small_font)
+        return replay_chart_overrides(reflow_monthly_wind_roses(f,columns=4 if w>h*1.12 else 3,font_size=small_font),include_title=False)
     polar=any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar") for t in f.data)
     if polar:
         # A polar circle is height-limited. Place it at the left of the
@@ -280,7 +281,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
             f.layout.margin.b=max(f.layout.margin.b or 0,round((rows+3)*(px+7)))
             f.layout.legend.update(yref="paper",y=1.035,yanchor="bottom")
             f.layout.margin.t=max(46,round(px*3))
-    return reflow_diurnal_panels(f,font_size=px)
+    return replay_chart_overrides(reflow_diurnal_panels(f,font_size=px),include_title=False)
 
 def source_interpretation(df,page,column="",label="",unit="",*,thresholds=(18.,26.),kind=""):
     """Use the same interpretation functions as the analysis pages, with

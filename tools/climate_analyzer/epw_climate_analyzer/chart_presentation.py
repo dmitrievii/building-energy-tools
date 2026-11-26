@@ -138,7 +138,8 @@ def settings_from_state(state: Mapping[str, Any]) -> ChartPresentationSettings:
         export_scale=int(state.get(KEY_EXPORT_SCALE, DEFAULT_EXPORT_SCALE)),
         custom_width=int(state.get(KEY_CUSTOM_WIDTH, DEFAULT_CUSTOM_WIDTH)),
         custom_height=int(state.get(KEY_CUSTOM_HEIGHT, DEFAULT_CUSTOM_HEIGHT)),
-        **{name: state.get(_key(name), default) for name, default in EXTRA_DEFAULTS.items()},
+        **{name: (default if name in ("axis_title","axis_min","axis_max") else state.get(_key(name), default))
+           for name, default in EXTRA_DEFAULTS.items()},
     )
 
 
@@ -556,7 +557,7 @@ def merge_plotly_config(
 def render_presentation_sidebar(st: Any) -> None:
     """Frequently used global visual controls; separate background and export."""
     ensure_default_state(st.session_state)
-    with st.sidebar.expander("Appearance", expanded=False):
+    with st.sidebar.expander("Appearance", expanded=False,icon=":material/palette:"):
         st.selectbox(
             "Canvas",
             CANVAS_OPTIONS,
@@ -592,13 +593,6 @@ def render_presentation_sidebar(st: Any) -> None:
         st.slider("Line thickness multiplier", 0.5, 3.0, step=0.25, key=_key("line_scale"))
         st.slider("Compass rotation [deg clockwise]", -180,180,step=5,key=_key("north_rotation"),
                   help="Only compass-based polar diagrams. Physical azimuth and north labels rotate together.")
-        st.text_input("Manual numeric axis title (exact match)",key=_key("axis_title"),
-                      help="Empty = automatic. Enter the exact axis title to limit the range override to matching numeric axes.")
-        if st.session_state[_key("axis_title")]:
-            st.number_input("Axis minimum",key=_key("axis_min"))
-            st.number_input("Axis maximum",key=_key("axis_max"))
-            if st.session_state[_key("axis_min")] >= st.session_state[_key("axis_max")]:
-                st.warning("Axis minimum must be below maximum; range override ignored.")
         if st.session_state.get(KEY_CANVAS, DEFAULT_CANVAS) == CANVAS_CUSTOM:
             c1, c2 = st.columns(2)
             c1.number_input(
@@ -623,7 +617,7 @@ def render_presentation_sidebar(st: Any) -> None:
             use_container_width=True,
         )
 
-    with st.sidebar.expander("Architectural background",expanded=False):
+    with st.sidebar.expander("Architectural background",expanded=False,icon=":material/image:"):
         st.checkbox("Architectural reference image",value=False,key=_key("underlay_enabled"),
                     help="Only 2D compass polar charts; image remains local to this session.")
         upload=st.file_uploader("Reference plan / image",type=["png","jpg","jpeg","webp"],key=_key("underlay_file"))
@@ -636,7 +630,7 @@ def render_presentation_sidebar(st: Any) -> None:
         st.button("Reset image position",key="_r219_reset_underlay",on_click=reset_underlay_position,args=(st.session_state,),disabled=not enabled)
         st.caption("Position, scale and rotate the plan relative to the compass chart.")
 
-    with st.sidebar.expander("Export settings",expanded=False):
+    with st.sidebar.expander("Export settings",expanded=False,icon=":material/download:"):
         st.selectbox("Image export format",["PNG","SVG"],key=_key("export_format"))
         st.select_slider(
             "Export scale",
@@ -668,6 +662,7 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
     # closure counter every rerun. The original callable remains stable.
     st.session_state["_mem_r5_capture_index"]=0
     st.session_state["_r219_heatmap_occurrences"]={}
+    st.session_state["_r220_chart_occurrences"]={}
     if getattr(st.plotly_chart,"_ige_r5_presentation_wrapper",False):
         return
 
@@ -675,6 +670,8 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         capture_index=int(st.session_state.get("_mem_r5_capture_index",0))+1
         st.session_state["_mem_r5_capture_index"]=capture_index
         settings = settings_from_state(st.session_state)
+        from .chart_overrides import chart_identity,render_chart_editor
+        edit_key=chart_identity(fig,st.session_state)
         from .calendar_heatmap_axes import set_period_axis_scope
         set_period_axis_scope(fig,context=st.session_state.get("_p6_report_context"))
         from .heatmap_controls import local_heatmap_settings
@@ -682,6 +679,7 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         settings=replace(settings,heatmap_mode=local["mode"],contour_interval=local["interval"],
                          contour_labels=local["labels"],contour_width=local["width"],contour_contrast=local["contrast"])
         apply_chart_presentation(fig, settings)
+        render_chart_editor(st,fig,edit_key)
         if any(t.type=="heatmap" for t in fig.data):
             meta=dict(fig.layout.meta) if isinstance(fig.layout.meta,dict) else {}
             meta["r219_heatmap_presentation"]=local

@@ -10,11 +10,9 @@ GROUPS=(
     ("Climate source",("Climate File Source",)),
     ("Overview",("Overview",)),
     ("Climate",("Temperature","Humidity and Psychrometrics","Solar and Radiation","Wind and Ventilation","Sky and Daylight","Precipitation and Snow")),
-    ("Explore",("Time Series and Overlay",)),
+    ("Explore",("Time Series and Overlay","Compare Climates","Data Quality")),
     ("Design",("Natural Ventilation","Shading analysis","HVAC and Passive Design","Outdoor Thermal Comfort")),
-    ("Compare Climates",("Compare Climates",)),
     ("Report",("Report",)),
-    ("Data Quality",("Data Quality",)),
 )
 SERVICE_KEY="_r219_service_open"
 PRESSURE_STATE="_r219_pressure_preferences"
@@ -27,8 +25,79 @@ def grouped_pages(pages):
     return tuple((label,tuple(p for p in members if p in available))
                  for label,members in GROUPS if available.intersection(members))
 
+# Native Material Symbols, not platform-dependent coloured emoji.
+ICONS={
+    "Climate source":"location_on","Overview":"dashboard","Climate":"partly_cloudy_day",
+    "Explore":"explore","Design":"architecture","Report":"description",
+    "Temperature":"thermostat","Humidity and Psychrometrics":"humidity_percentage",
+    "Solar and Radiation":"wb_sunny","Wind and Ventilation":"air",
+    "Sky and Daylight":"partly_cloudy_day","Precipitation and Snow":"rainy",
+    "Time Series and Overlay":"show_chart","Compare Climates":"compare_arrows",
+    "Data Quality":"database","Natural Ventilation":"air","Shading analysis":"wb_twilight",
+    "HVAC and Passive Design":"home","Outdoor Thermal Comfort":"device_thermostat",
+}
+LABELS={"Humidity and Psychrometrics":"Humidity & psychrometrics",
+        "Compare Climates":"Compare climates","Data Quality":"Data quality",
+        "Shading analysis":"Shading","HVAC and Passive Design":"Passive design & HVAC"}
+
 def short_label(page):
-    return NAVIGATION_LABELS.get(page,page).split(" — ",1)[-1]
+    return LABELS.get(page,NAVIGATION_LABELS.get(page,page).split(" — ",1)[-1])
+
+def page_button_key(page):
+    return "_r220_page_"+page.replace(" ","_")
+
+NAV_CSS="""<style>
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree,
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree [data-testid="stVerticalBlock"] {
+    gap:.15rem!important;
+}
+section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button,
+section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button,
+section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button {
+    justify-content:flex-start; text-align:left; min-height:2rem;
+    padding:.3rem .55rem; border:0!important; box-shadow:none!important;
+    color:inherit!important; border-radius:.35rem; background:transparent!important;
+    font-weight:400;
+}
+section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button {
+    padding-left:1.55rem; font-size:.92rem;
+}
+section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button {
+    font-weight:550;
+}
+section[data-testid="stSidebar"] .st-key-_r220_page_Temperature [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] .st-key-_r220_page_Solar_and_Radiation [data-testid="stIconMaterial"] {color:#D97706}
+section[data-testid="stSidebar"] .st-key-_r220_page_Humidity_and_Psychrometrics [data-testid="stIconMaterial"] {color:#0891B2}
+section[data-testid="stSidebar"] .st-key-_r220_page_Precipitation_and_Snow [data-testid="stIconMaterial"] {color:#2563EB}
+section[data-testid="stSidebar"] .st-key-_r220_page_Wind_and_Ventilation [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] .st-key-_r220_page_Natural_Ventilation [data-testid="stIconMaterial"] {color:#059669}
+section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button[data-testid="stBaseButton-primary"],
+section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button[data-testid="stBaseButton-primary"],
+section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button[data-testid="stBaseButton-primary"] {
+    background:color-mix(in srgb,currentColor 9%,transparent)!important;
+    font-weight:600;
+}
+section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button:hover,
+section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button:hover,
+section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button:hover,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button:hover {
+    background:color-mix(in srgb,currentColor 6%,transparent)!important;
+}
+section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button:focus-visible,
+section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button:focus-visible,
+section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button:focus-visible,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button:focus-visible {
+    outline:2px solid currentColor!important; outline-offset:1px;
+}
+</style>"""
+
+def render_nav_style(st):
+    st.html(NAV_CSS)
+
+def _nav_row(area,label,key,icon,selected,on_click,args):
+    area.button(label,key=key,icon=f":material/{icon}:",use_container_width=True,
+                type="primary" if selected else "tertiary",on_click=on_click,args=args)
 
 def select_page(state,page):
     state[NAVIGATION_KEY]=page
@@ -65,37 +134,30 @@ def render_navigation(st,pages,area=None):
     state["_r219_available_pages"]=pages
     groups=grouped_pages(pages)
     sync_open_groups(state,active,groups)
-    area.markdown("**Analysis**")
+    tree=area.container(key="_r220_navigation_tree")
     for group,members in groups:
         key="_r219_nav_"+group.replace(" ","_")
+        selected=active in members and not state.get(SERVICE_KEY)
         if group in EXPANDABLE:
             opened=group in state[OPEN_GROUPS]
-            area.button(group+(" ▾" if opened else " ▸"),
-                        key="_r219_group_"+group,use_container_width=True,
-                        on_click=toggle_group,args=(state,group),
-                        type="primary" if active in members and not state.get(SERVICE_KEY) else "secondary")
+            _nav_row(tree,group+(" ▾" if opened else " ▸"),"_r219_group_"+group,
+                     ICONS[group],selected and not opened,toggle_group,(state,group))
             if opened:
-                selected=active if active in members else None
-                if state.get(key)!=selected:state[key]=selected
-                area.radio(group+" pages",members,index=None,key=key,format_func=short_label,
-                           label_visibility="collapsed",on_change=_group_changed,args=(state,key))
+                for page in members:
+                    _nav_row(tree,short_label(page),page_button_key(page),ICONS[page],
+                             active==page and not state.get(SERVICE_KEY),select_page,(state,page))
         else:
-            area.button(group,key=key+"_button",use_container_width=True,
-                        type="primary" if active in members and not state.get(SERVICE_KEY) else "secondary",
-                        on_click=select_page,args=(state,members[0]))
+            _nav_row(tree,group,key+"_button",ICONS[group],selected,select_page,(state,members[0]))
     return state[NAVIGATION_KEY]
 
-def _group_changed(state,key):
-    page=state.get(key)
-    if page is not None:select_page(state,page)
 
 def render_service(st,area,render_memory):
     """A deliberate route, not a collapsed diagnostics tree rendered on every run."""
     state=st.session_state
     def toggle():
         state[SERVICE_KEY]=not state.get(SERVICE_KEY,False)
-    area.button("Service & Diagnostics",key="_r219_service_button",on_click=toggle,
-                use_container_width=True,type="secondary")
+    area.button("Service & Diagnostics",key="_r219_service_button",icon=":material/build:",on_click=toggle,
+                use_container_width=True,type="tertiary")
     if not state.get(SERVICE_KEY,False):return False
     st.header("Service & Diagnostics")
     st.button("Back to analysis",key="_r219_service_back",on_click=toggle)
@@ -136,7 +198,7 @@ def remember_filters(state):
 
 def filter_panel(st,area=None):
     area=area if area is not None else st.sidebar
-    panel=area.expander("Data filters",expanded=False)
+    panel=area.expander("Data filters",expanded=False,icon=":material/calendar_month:")
     panel.button("Reset filters",key="_r219_reset_filters",on_click=reset_filters,args=(st.session_state,))
     return panel
 
