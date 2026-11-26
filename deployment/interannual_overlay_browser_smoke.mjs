@@ -1,3 +1,4 @@
+import { clickGroupedNavigation, expandSidebar } from './r219_navigation.mjs';
 import fs from 'node:fs/promises';
 import process from 'node:process';
 import { chromium } from 'playwright-core';
@@ -417,7 +418,7 @@ async function loadDataset(page) {
     const button = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
     if (await button.count().catch(() => 0)) {
       await button.click({ timeout: 15000 });
-      return appFrame(page, 'Explore — Time series & overlay', 120000);
+      return appFrame(page, 'Overview', 120000);
     }
     await sleep(300);
   }
@@ -426,6 +427,7 @@ async function loadDataset(page) {
 }
 
 async function chooseTimeBasis(page) {
+  await expandSidebar(await appFrame(page),'Data filters');
   await selectComboOption(page, 'Time basis', (text) => text.trim() === 'Interannual overlay');
   const frame = await appFrame(page);
   const control = await combo(frame, 'Time basis');
@@ -435,9 +437,7 @@ async function chooseTimeBasis(page) {
 
 async function openOverlay(page) {
   const frame = await appFrame(page);
-  const target = frame.getByText('Explore — Time series & overlay', { exact: true }).last();
-  if (!(await target.count().catch(() => 0))) throw new Error('Time series & overlay navigation item missing.');
-  await target.click({ force: true, timeout: 10000 });
+  await clickGroupedNavigation(frame,'Explore — Time series & overlay');
   return appFrame(page, 'Time series and overlay', 30000);
 }
 

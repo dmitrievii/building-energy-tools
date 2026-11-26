@@ -488,7 +488,7 @@ try {
   if (!FAST_MODE) {
     const frame = await waitMonthlySurface(page);
     await frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first().click({ timeout: 10000 });
-    await appFrame(page, 'Explore — Time series & overlay', 120000);
+    await appFrame(page, 'Overview', 120000);
     report.checks.dataset_activated_after_explicit_load = true;
   } else {
     const frame = await appFrame(page, 'Measured variables to load');

@@ -53,7 +53,7 @@ async function waitForCharts(page, expected = 4, timeoutMs = 60000) {
 async function openPresentation(page) {
   let frame = await appFrame(page);
   if ((await bodyText(frame)).includes('Chart font size [pt]')) return frame;
-  await frame.getByText('Presentation', { exact: true }).first().click({ timeout: 10000 });
+  await frame.getByText('Appearance', { exact: true }).first().click({ timeout: 10000 });
   const started = Date.now();
   while (Date.now() - started < 10000) {
     frame = await appFrame(page);
