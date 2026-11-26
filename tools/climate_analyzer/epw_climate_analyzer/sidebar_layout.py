@@ -90,11 +90,17 @@ def reset_filters(state):
     state.pop(FILTER_STORE,None)
 
 def restore_filters(state,source_start=None,source_end=None,years=()):
-    for key,value in state.get(FILTER_STORE,{}).items():
-        if key not in FILTER_KEYS or key in state:continue
-        if key=="global_data_range_year" and years and value not in years:continue
-        if key.endswith("_date") and source_start is not None and not source_start.date()<=value<=source_end.date():continue
-        state[key]=value
+    # Historical clock/quality controls are read before the canonical frame is
+    # built. Date-dependent controls are restored only once its bounds exist.
+    for key in FILTER_KEYS:
+        if source_start is None and not key.startswith("historical_"):continue
+        value=state.get(key,state.get(FILTER_STORE,{}).get(key))
+        if value is None:continue
+        invalid=(key=="global_data_range_year" and bool(years) and value not in years)
+        if key.endswith("_date") and source_start is not None:
+            invalid=not source_start.date()<=value<=source_end.date()
+        if invalid:state.pop(key,None)
+        elif key not in state:state[key]=value
 
 def remember_filters(state):
     saved=dict(state.get(FILTER_STORE,{}))

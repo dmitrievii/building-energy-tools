@@ -59,15 +59,18 @@ def local_heatmap_settings(st,fig):
     key=chart_key(fig,state)
     saved=get_preferences(state,key)
     prefix="_r219_hm_"+key+"_"
-    for field,value in saved.items():state.setdefault(prefix+field,value)
+    state.setdefault(prefix+"mode",saved["mode"])
     with st.container():
         columns=st.columns([2,1])
         mode=columns[0].radio("Heat-map visualization",MODES,key=prefix+"mode",horizontal=True,
                               help="This setting applies only to this diagram.")
         labels=saved["labels"]
-        if mode!=TILES:labels=columns[1].checkbox("Contour labels",key=prefix+"labels")
+        if mode!=TILES:
+            state.setdefault(prefix+"labels",saved["labels"])
+            labels=columns[1].checkbox("Contour labels",key=prefix+"labels")
         values={**saved,"mode":mode,"labels":labels}
         if mode!=TILES:
+            for field in ("interval","width","contrast"):state.setdefault(prefix+field,saved[field])
             with st.expander("Contour settings",expanded=False):
                 values["interval"]=st.number_input("Contour interval (0 = automatic)",min_value=0.,step=.5,key=prefix+"interval")
                 values["width"]=st.slider("Contour line thickness [px]",.5,3.,step=.25,key=prefix+"width")

@@ -6479,7 +6479,7 @@ def main() -> None:
     from epw_climate_analyzer.startup_runtime import ensure_initialized
     stages=ensure_initialized()
     deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"] not in ("UTCI (conditional)","Folium")]
-    if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
+    if deferred:st.sidebar.warning("Core initialization incomplete · see Service & Diagnostics.")
     from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
     from epw_climate_analyzer import session_reaper as reaper_runtime
     from epw_climate_analyzer import chart_presentation as presentation_runtime
@@ -6522,8 +6522,7 @@ def main() -> None:
         if pages:_sidebar_layout.render_navigation(st,pages,_r219_nav_area)
         _r219_climate_area.caption("Service view · active climate retained")
         return
-    with report_area:
-        profile_diagnostic("report sidebar status",render_report_status,st)
+    profile_diagnostic("report sidebar status",render_report_status,st,report_area)
     if st.session_state.pop("_mem_r12_reset_notice",False):
         st.success("Session reset. Shared scientific runtime retained.")
     active_file = get_active_climate_file()
