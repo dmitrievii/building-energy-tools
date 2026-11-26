@@ -155,3 +155,25 @@ if not render_service(st,st.sidebar,diagnostics):
         at.button(key="_r219_service_back").click().run(timeout=30)
         self.assertFalse(list(at.exception))
         self.assertEqual(at.session_state["diagnostic_calls"],1)
+
+    def test_geosphere_compatibility_wrappers_forward_container_and_prevent_duplicates(self):
+        from types import SimpleNamespace
+        from unittest.mock import Mock,patch
+        from epw_climate_analyzer import source_parity_fixes as fixes
+        clock=Mock(return_value=("clock","Europe/Vienna",1.))
+        quality=Mock(return_value="quality")
+        parity=SimpleNamespace(_source_parity_unfixed_analysis_clock=clock,
+                               _source_parity_unfixed_quality_policy=quality)
+        dataset=SimpleNamespace(data=pd.DataFrame())
+        dataset.data.attrs["canonical_analysis_timezone_name"]="Europe/Vienna"
+        area=object()
+        with patch.object(fixes.st,"session_state",{NAVIGATION_KEY:"Temperature"}):
+            self.assertEqual(fixes._analysis_clock_without_duplicate_widget(parity,dataset,area),clock.return_value)
+            self.assertEqual(fixes._quality_without_duplicate_widget(parity,dataset,area),quality.return_value)
+            clock.assert_called_once_with(dataset,area=area)
+            quality.assert_called_once_with(dataset,area=area)
+        with patch.object(fixes.st,"session_state",{NAVIGATION_KEY:"Compare Climates"}):
+            fixes._analysis_clock_without_duplicate_widget(parity,dataset,area)
+            fixes._quality_without_duplicate_widget(parity,dataset,area)
+            self.assertEqual(clock.call_count,1)
+            self.assertEqual(quality.call_count,1)

@@ -85,7 +85,7 @@ def _calendar_mean_year(climate: Any) -> Any:
     return replace(climate, data=grouped, display_name=f"{climate.display_name} · mean year")
 
 
-def _analysis_clock_without_duplicate_widget(parity: Any, dataset: Any):
+def _analysis_clock_without_duplicate_widget(parity: Any, dataset: Any, area=None):
     """Avoid instantiating the same sidebar widget twice on Compare Climates."""
     if st.session_state.get("climate_analyzer_navigation") == "Compare Climates":
         local_timezone = str(dataset.data.attrs.get("canonical_analysis_timezone_name") or "").strip() or None
@@ -100,13 +100,13 @@ def _analysis_clock_without_duplicate_widget(parity: Any, dataset: Any):
         if selected == LOCAL_STANDARD_TIME and standard_offset is None:
             selected = LOCAL_CIVIL_TIME if local_timezone else SOURCE_TIME
         return selected, local_timezone, standard_offset
-    return parity._source_parity_unfixed_analysis_clock(dataset)
+    return parity._source_parity_unfixed_analysis_clock(dataset, area=area)
 
 
-def _quality_without_duplicate_widget(parity: Any, dataset: Any) -> str:
+def _quality_without_duplicate_widget(parity: Any, dataset: Any, area=None) -> str:
     if st.session_state.get("climate_analyzer_navigation") == "Compare Climates":
         return str(st.session_state.get("historical_quality_policy", QUALITY_POLICY_ALL))
-    return parity._source_parity_unfixed_quality_policy(dataset)
+    return parity._source_parity_unfixed_quality_policy(dataset, area=area)
 
 
 def _append_epw_header_metadata(legacy: Any, original: Any, epw: Any, df: pd.DataFrame, issues: list[object]) -> None:
@@ -160,10 +160,10 @@ def apply_source_parity_fixes(legacy: Any, parity: Any) -> None:
 
     if not hasattr(parity, "_source_parity_unfixed_analysis_clock"):
         parity._source_parity_unfixed_analysis_clock = parity._analysis_clock_contract
-        parity._analysis_clock_contract = lambda dataset: _analysis_clock_without_duplicate_widget(parity, dataset)
+        parity._analysis_clock_contract = lambda dataset, area=None: _analysis_clock_without_duplicate_widget(parity, dataset, area=area)
     if not hasattr(parity, "_source_parity_unfixed_quality_policy"):
         parity._source_parity_unfixed_quality_policy = parity._quality_policy_control
-        parity._quality_policy_control = lambda dataset: _quality_without_duplicate_widget(parity, dataset)
+        parity._quality_policy_control = lambda dataset, area=None: _quality_without_duplicate_widget(parity, dataset, area=area)
 
     if not hasattr(legacy, "_source_parity_original_epw_data_quality"):
         legacy._source_parity_original_epw_data_quality = legacy.render_data_quality

@@ -24,27 +24,33 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
         self.tree = ast.parse(self.source)
 
     def test_epw_station_pressure_is_the_default_ui_mode(self) -> None:
+        # The physical default is still specified by the EPW route, now
+        # through a contextual selector rather than a global sidebar widget.
         matches = []
         for node in ast.walk(self.tree):
-            if not isinstance(node, ast.Call):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
                 continue
-            if not isinstance(node.func, ast.Attribute) or node.func.attr != "selectbox":
-                continue
-            if not node.args or not isinstance(node.args[0], ast.Constant):
-                continue
-            if node.args[0].value != "Psychrometric pressure mode":
-                continue
-            if len(node.args) < 2:
+            if node.func.attr != "pressure_selection" or len(node.args)<3:
                 continue
             try:
-                options = ast.literal_eval(node.args[1])
-            except Exception:
+                options=ast.literal_eval(node.args[2])
+            except (ValueError,TypeError):
                 continue
             if "EPW station pressure with fallback median" in options:
-                matches.append(node)
-        self.assertEqual(len(matches), 1)
-        keywords = {kw.arg: kw.value for kw in matches[0].keywords if kw.arg}
-        self.assertEqual(ast.literal_eval(keywords["index"]), 1)
+                matches.append((node,options))
+        self.assertEqual(len(matches),1)
+        node,options=matches[0]
+        keywords={kw.arg:ast.literal_eval(kw.value) for kw in node.keywords if kw.arg in ("source","default")}
+        self.assertEqual(keywords["source"],"epw")
+        self.assertEqual(options[keywords["default"]],"EPW station pressure with fallback median")
+        from epw_climate_analyzer.sidebar_layout import pressure_selection
+        from unittest.mock import Mock
+        ui=Mock()
+        ui.session_state={}
+        mode,custom=pressure_selection(ui,"Temperature",options,source="epw",default=keywords["default"])
+        self.assertEqual(mode,"EPW station pressure with fallback median")
+        self.assertIsNone(custom)
+        ui.selectbox.assert_not_called()
         self.assertIn("atmospheric station pressure stored in the EPW", self.source)
         self.assertIn("hourly EPW station values; fallback median", self.source)
 
