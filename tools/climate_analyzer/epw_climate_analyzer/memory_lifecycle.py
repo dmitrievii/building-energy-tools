@@ -348,6 +348,8 @@ def begin_rerun(state,page):
         # Preserve ready downloads during routine navigation. New exports or
         # an explicit cleanup are the responsibility of the corresponding action.
         cleanup(state,"Automatic memory pressure cleanup",derived=True,disk=True,shared_caches=True,private_caches=True)
+        snapshot=memory_snapshot()
+    return pressure_high(snapshot)
 
 def _mib(value):
     return f"{value/m.MIB:,.0f} MiB" if value is not None else "Unavailable"
@@ -356,10 +358,16 @@ def render_sidebar(st):
     from .startup_runtime import profile_diagnostic
     return profile_diagnostic("memory sidebar rendering",_render_sidebar,st)
 
-def _render_sidebar(st):
+def render_service_memory(st):
+    """Diagnostics are constructed only on the explicit service route."""
+    from .startup_runtime import profile_diagnostic
+    return profile_diagnostic("memory service rendering",_render_sidebar,st,st)
+
+def _render_sidebar(st,area=None):
     """Compact summary, with detailed diagnostics explicitly opt-in."""
     state=st.session_state
-    with st.sidebar.expander("Memory management",expanded=False):
+    area=st.sidebar if area is None else area
+    with area.expander("Memory & caches",expanded=area is st):
         snapshot=memory_snapshot()
         used,limit=snapshot.get("used"),snapshot.get("limit")
         if used is not None and limit:

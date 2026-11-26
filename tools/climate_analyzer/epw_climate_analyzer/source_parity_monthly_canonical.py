@@ -220,7 +220,10 @@ def monthly_page_names(groups: Mapping[str, list[str]]) -> tuple[str, ...]:
 
 def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
     st = legacy.st
-    st.sidebar.markdown("### Data filter")
+    from . import sidebar_layout as layout
+    area=getattr(legacy,"_r219_filter_area",st.sidebar)
+    panel=getattr(legacy,"_r219_filter_panel",None)
+    if panel is None:panel=layout.filter_panel(st,area)
     if df.empty:
         st.session_state["_active_filtered_export_df"] = df
         return df
@@ -228,10 +231,11 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
     source_start = pd.Timestamp(df.index.min())
     source_end = pd.Timestamp(df.index.max())
     years = legacy.available_years(df)
-    st.sidebar.caption(f"Available: {source_start.strftime('%b %Y')} → {source_end.strftime('%b %Y')}")
-    st.sidebar.caption("Native temporal resolution: monthly. Hour/day filters are not applicable.")
+    layout.restore_filters(st.session_state,source_start,source_end,years)
+    panel.caption(f"Available: {source_start.strftime('%b %Y')} → {source_end.strftime('%b %Y')}")
+    panel.caption("Native temporal resolution: monthly. Hour/day filters are not applicable.")
 
-    range_mode = st.sidebar.selectbox(
+    range_mode = panel.selectbox(
         "Range",
         ["All available", "Year", "Custom"],
         index=0,
@@ -243,7 +247,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
     end_value = None
     if range_mode == "Year":
         selected_year = int(
-            st.sidebar.selectbox(
+            panel.selectbox(
                 "Year",
                 years,
                 index=max(len(years) - 1, 0),
@@ -252,7 +256,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         )
         ranged = legacy.filter_year(df, selected_year)
     elif range_mode == "Custom":
-        cols = st.sidebar.columns(2)
+        cols = panel.columns(2)
         start_date = cols[0].date_input(
             "From date",
             value=source_start.date(),
@@ -270,14 +274,14 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         start_value = pd.Timestamp(start_date)
         end_value = pd.Timestamp(end_date) + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
         if start_value > end_value:
-            st.sidebar.error("From must not be later than To.")
+            panel.error("From must not be later than To.")
             ranged = df.iloc[0:0].copy()
         else:
             ranged = legacy.filter_datetime_range(df, start=start_value, end=end_value)
 
     ranged_years = legacy.available_years(ranged) if not ranged.empty else []
     if len(ranged_years) > 1:
-        basis = st.sidebar.selectbox(
+        basis = panel.selectbox(
             "Time basis",
             [legacy.CHRONOLOGICAL, legacy.CALENDAR_PROFILE, legacy.INTERANNUAL_OVERLAY],
             index=0,
@@ -292,7 +296,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         basis = legacy.CHRONOLOGICAL
     ranged = legacy.with_time_basis(ranged, basis)
 
-    selected_names = st.sidebar.multiselect(
+    selected_names = panel.multiselect(
         "Months",
         list(legacy.MONTHS.keys()),
         default=list(legacy.MONTHS.keys()),
@@ -314,6 +318,8 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         "native_resolution": "monthly",
     }
     st.session_state["_active_filtered_export_df"] = filtered
+    layout.remember_filters(st.session_state)
+    layout.filter_summary(area,st.session_state["_active_global_filter_spec"])
     return filtered
 
 
@@ -433,14 +439,8 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
 
     if legacy.NAVIGATION_KEY not in st.session_state or st.session_state[legacy.NAVIGATION_KEY] not in pages:
         st.session_state[legacy.NAVIGATION_KEY] = "Overview"
-    st.sidebar.markdown("### Explore")
-    page = st.sidebar.radio(
-        "Analysis section",
-        pages,
-        format_func=legacy.navigation_label,
-        key=legacy.NAVIGATION_KEY,
-        label_visibility="collapsed",
-    )
+    from . import sidebar_layout as layout
+    page=layout.render_navigation(st,pages,getattr(legacy,"_r219_nav_area",None))
     if page == "Climate File Source":
         legacy.render_climate_file_source()
         return
@@ -450,15 +450,15 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         st.warning("The current Data filter removes all monthly records.")
         return
 
-    st.sidebar.markdown("### Current climate")
-    st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
-    st.sidebar.caption("GeoSphere Austria · native monthly climatological statistics")
-    st.sidebar.write(f"Monthly rows in current view: {len(filtered):,}")
-    with st.sidebar.expander("Data provenance", expanded=False):
-        st.caption(dataset.provenance.dataset)
-        st.caption(f"Dataset DOI: {MONTHLY_DOI}")
-        st.caption("Native resolution: monthly")
-        st.caption("No hourly or daily reconstruction is applied.")
+    climate_area=getattr(legacy,"_r219_climate_area",st.sidebar)
+    climate_area.write(f"**{dataset.location.city}, {dataset.location.country}**")
+    climate_area.caption(f"GeoSphere Austria · {len(filtered):,} monthly records")
+    if page=="Data Quality":
+        with st.expander("Data provenance",expanded=False):
+            st.caption(dataset.provenance.dataset)
+            st.caption(f"Dataset DOI: {MONTHLY_DOI}")
+            st.caption("Native resolution: monthly")
+            st.caption("Native monthly observations are retained.")
 
     from .p6_report import set_context
     set_context(st.session_state,page=page,source=dataset.display_name,location=f"{dataset.location.city}, {dataset.location.country}",df=filtered,extra={"native resolution":"monthly","provider":dataset.provenance.provider},site=dataset.location,source_id=dataset.climate_id)

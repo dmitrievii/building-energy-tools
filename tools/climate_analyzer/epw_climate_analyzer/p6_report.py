@@ -123,6 +123,9 @@ def capture_control(st,fig,key):
     button_key="p6_capture_"+str(context.get("page"))+"_"+str(key)
     saved_context={**context,"keyed chart settings":_capture_settings(st.session_state),
                    "temperature thresholds":list(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))}
+    meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+    if "r219_heatmap_presentation" in meta:
+        saved_context["heatmap presentation"]=dict(meta["r219_heatmap_presentation"])
     interpretation=st.session_state.get(INTERPRETATION_KEY,"")
     state=st.session_state
     token=state.get("_p6_page_token")
@@ -149,17 +152,18 @@ def save_all_displayed(state):
     except Exception as exc:
         state["_p6_bulk_notice"]=f"Bulk capture not saved: {exc}"
 
-def render_report_status(st):
+def render_report_status(st,area=None):
     """Visible basket count and capture of the prior displayed page."""
     state=st.session_state
-    st.sidebar.caption(f"Report: {len(state.get(REPORT_KEY,[]))} saved diagram(s)")
+    area=st.sidebar if area is None else area
+    area.caption(f"Report · {len(state.get(REPORT_KEY,[]))} saved diagrams")
     from .ui_contract import NAVIGATION_KEY
     token=begin_page(state)
     if state.get(NAVIGATION_KEY) not in ("Report","Climate File Source"):
-        st.sidebar.button("Add all displayed diagrams",key="p6_capture_all",
+        area.button("Add all displayed diagrams",key="p6_capture_all",
                           on_click=save_current_page,args=(token,),
                           help="Capture every Plotly diagram on the current analysis page.")
-        if state.get("_p6_bulk_notice"):st.sidebar.caption(state.pop("_p6_bulk_notice"))
+        if state.get("_p6_bulk_notice"):area.caption(state.pop("_p6_bulk_notice"))
 
 
 def _safe(value):

@@ -9,6 +9,30 @@ from uuid import uuid4
 
 
 import streamlit as st
+
+# A Cloud hot deploy may replace app.py and package source without restarting
+# the Python worker. Check the loaded build identity before any new API import.
+# Reloading shared modules piecemeal is unsafe: other sessions and persistent
+# cache owners can retain old callable references. Require a clean process
+# instead, without mutating shared runtime or initializing scientific stacks.
+from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID, runtime_build_id
+if RUNTIME_BUILD_ID != runtime_build_id():
+    st.error("A new Climate Analyzer release is on disk, but this server is still running the previous build. Open Manage app → Reboot app once to activate the new release.")
+    st.stop()
+
+# Independent safety check for a stale palette module when runtime_identity
+# was first imported after the deployment. This check precedes named imports.
+from epw_climate_analyzer import chart_theme as _startup_chart_theme
+from hashlib import sha256 as _startup_sha256
+from pathlib import Path as _StartupPath
+if (getattr(_startup_chart_theme,"_RUNTIME_SOURCE_SHA256",None)
+        != _startup_sha256(_StartupPath(_startup_chart_theme.__file__).read_bytes()).hexdigest()
+        or not all(hasattr(_startup_chart_theme,name) for name in (
+            "metric_color","semantic_color_from_text","PASSIVE_STRATEGY_COLORS","climate_color_map",
+        ))):
+    st.error("The server retains an older Climate Analyzer colour module. Open Manage app → Reboot app once to load the current release.")
+    st.stop()
+
 from epw_climate_analyzer import byte_cache as _runtime_cache
 from epw_climate_analyzer import memory_lifecycle as _runtime_memory
 from epw_climate_analyzer import startup_runtime as _runtime_startup
@@ -65,7 +89,7 @@ from epw_climate_analyzer.ui_contract import (
     queue_navigation_reset,
 )
 from epw_climate_analyzer.chart_theme import metric_color, semantic_color_from_text, PASSIVE_STRATEGY_COLORS, climate_color_map
-from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID
+from epw_climate_analyzer import sidebar_layout as _sidebar_layout
 
 
 _MAP_DEPENDENCIES_LOADED = False
@@ -2018,7 +2042,9 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     every real month/day/hour distinct. Calendar profile is an explicit opt-in
     that aligns equivalent calendar positions across the selected years.
     """
-    st.sidebar.markdown("### Data filter")
+    area=globals().get("_r219_filter_area",st.sidebar)
+    panel=globals().get("_r219_filter_panel")
+    if panel is None:panel=_sidebar_layout.filter_panel(st,area)
     if df.empty or not isinstance(df.index, pd.DatetimeIndex):
         st.session_state["_active_filtered_export_df"] = df
         return df
@@ -2026,11 +2052,12 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     source_start = pd.Timestamp(df.index.min())
     source_end = pd.Timestamp(df.index.max())
     years = available_years(df)
-    st.sidebar.caption(
+    _sidebar_layout.restore_filters(st.session_state,source_start,source_end,years)
+    panel.caption(
         f"Available: {source_start.strftime('%d %b %Y %H:%M')} → {source_end.strftime('%d %b %Y %H:%M')}"
     )
 
-    range_mode = st.sidebar.selectbox(
+    range_mode = panel.selectbox(
         "Range",
         ["All available", "Year", "Custom"],
         index=0,
@@ -2041,7 +2068,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     start_value = None
     end_value = None
     if range_mode == "Year":
-        selected_year = st.sidebar.selectbox(
+        selected_year = panel.selectbox(
             "Year",
             years,
             index=max(len(years) - 1, 0),
@@ -2050,7 +2077,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
         selected_year_value = int(selected_year)
         ranged = filter_year(df, selected_year_value)
     elif range_mode == "Custom":
-        date_cols = st.sidebar.columns(2)
+        date_cols = panel.columns(2)
         start_date = date_cols[0].date_input(
             "From date",
             value=source_start.date(),
@@ -2065,7 +2092,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
             max_value=source_end.date(),
             key="global_data_range_end_date",
         )
-        time_cols = st.sidebar.columns(2)
+        time_cols = panel.columns(2)
         start_time = time_cols[0].time_input(
             "From time",
             value=source_start.time().replace(tzinfo=None),
@@ -2079,14 +2106,14 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
         start_value = pd.Timestamp.combine(start_date, start_time)
         end_value = pd.Timestamp.combine(end_date, end_time)
         if start_value > end_value:
-            st.sidebar.error("From must not be later than To.")
+            panel.error("From must not be later than To.")
             ranged = df.iloc[0:0].copy()
         else:
             ranged = filter_datetime_range(df, start=start_value, end=end_value)
 
     ranged_years = available_years(ranged) if not ranged.empty else []
     if len(ranged_years) > 1:
-        basis = st.sidebar.selectbox(
+        basis = panel.selectbox(
             "Time basis",
             [CHRONOLOGICAL, CALENDAR_PROFILE, INTERANNUAL_OVERLAY],
             index=0,
@@ -2103,8 +2130,8 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
 
     # Existing recurring month/hour controls are retained: they now refine the
     # absolute range instead of acting as the only global time filter.
-    selected_month_names = st.sidebar.multiselect("Months", list(MONTHS.keys()), default=list(MONTHS.keys()))
-    selected_hours = st.sidebar.slider("Hour range", min_value=0, max_value=23, value=(0, 23))
+    selected_month_names = panel.multiselect("Months", list(MONTHS.keys()), default=list(MONTHS.keys()),key="global_months_hourly_source")
+    selected_hours = panel.slider("Hour range", min_value=0, max_value=23, value=(0, 23),key="global_hours_hourly_source")
     months = [MONTHS[m] for m in selected_month_names]
     hours = list(range(selected_hours[0], selected_hours[1] + 1))
     filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
@@ -2123,6 +2150,8 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     # it in transient Streamlit session state avoids duplicating filter logic in
     # every chart renderer.
     st.session_state["_active_filtered_export_df"] = filtered
+    _sidebar_layout.remember_filters(st.session_state)
+    _sidebar_layout.filter_summary(area,st.session_state["_active_global_filter_spec"])
     return filtered
 
 
@@ -6177,38 +6206,20 @@ def render_canonical_climate_analysis(dataset) -> None:
         preferred = "Overview" if "Overview" in historical_pages else "Time Series and Overlay"
         st.session_state[NAVIGATION_KEY] = preferred
 
-    st.sidebar.markdown("### Explore")
-    page = st.sidebar.radio(
-        "Analysis section",
-        historical_pages,
-        format_func=navigation_label,
-        key=NAVIGATION_KEY,
-        label_visibility="collapsed",
-    )
+    page = _sidebar_layout.render_navigation(st,historical_pages,globals().get("_r219_nav_area"))
     if page == "Climate File Source":
         render_climate_file_source()
         return
 
-    with st.sidebar.expander("Advanced calculation settings", expanded=False):
-        pressure_mode = st.selectbox(
-            "Psychrometric pressure mode",
-            [
+    pressure_mode,custom_pressure=_sidebar_layout.pressure_selection(st,page,[
                 "Measured station pressure with fallback median",
                 "Normal pressure: 101325 Pa",
                 "Altitude-derived standard atmosphere pressure",
                 "Custom constant pressure",
-            ],
-            index=0,
-            help=(
+            ],source="historical",default=0,help=(
                 "Default: normalize measured GeoSphere station pressure to the canonical hourly analysis cadence. "
                 "The measured-pressure median is used only as a fallback where an hourly pressure value is unavailable."
-            ),
-        )
-        custom_pressure = None
-        if pressure_mode == "Custom constant pressure":
-            custom_pressure = st.number_input(
-                "Custom pressure [Pa]", min_value=30000.0, max_value=120000.0, value=101325.0, step=100.0
-            )
+            ))
 
     can_derive_psychrometrics = (
         has_numeric_observations(dataset.data, "dry_bulb_temperature_c")
@@ -6284,26 +6295,27 @@ def render_canonical_climate_analysis(dataset) -> None:
     source_interval = float(dataset.temporal.native_interval_minutes)
     analysis_interval = float(full_df.attrs.get("canonical_analysis_interval_minutes", 60.0))
     frame_role = str(full_df.attrs.get("canonical_frame_role", "hourly-analysis"))
-    st.sidebar.markdown("### Current climate")
-    st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
+    climate_area=globals().get("_r219_climate_area",st.sidebar)
+    climate_area.write(f"**{dataset.location.city}, {dataset.location.country}**")
     if frame_role == "native-diagnostics":
-        st.sidebar.caption(f"GeoSphere Austria · native source diagnostics · {source_interval:g} min")
-        st.sidebar.write(f"Source rows loaded: {len(filtered_df):,}")
+        climate_area.caption(f"GeoSphere Austria · native source diagnostics · {source_interval:g} min")
+        climate_area.write(f"Source rows loaded: {len(filtered_df):,}")
     else:
-        st.sidebar.caption(
+        climate_area.caption(
             f"GeoSphere Austria · source {source_interval:g} min → canonical analysis {analysis_interval:g} min"
         )
-        st.sidebar.write(f"Hourly analysis rows in current view: {len(filtered_df):,}")
-    with st.sidebar.expander("Data provenance", expanded=False):
-        st.caption(dataset.provenance.dataset)
-        st.caption(f"Source cadence: {source_interval:g} min")
-        st.caption(f"Canonical analysis cadence: {analysis_interval:g} min")
-        st.caption(f"Active frame: {'native source diagnostics' if frame_role == 'native-diagnostics' else 'canonical hourly analysis'}")
-        st.caption(f"Calendar: real historical UTC · {dataset.temporal.calendar_mode}")
-        if pressure_mode == "Measured station pressure with fallback median":
-            st.caption(f"Pressure: measured station values; fallback median {active_pressure:,.0f} Pa")
-        else:
-            st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
+        climate_area.write(f"Hourly analysis rows in current view: {len(filtered_df):,}")
+    if page=="Data Quality":
+        with st.expander("Data provenance", expanded=False):
+            st.caption(dataset.provenance.dataset)
+            st.caption(f"Source cadence: {source_interval:g} min")
+            st.caption(f"Canonical analysis cadence: {analysis_interval:g} min")
+            st.caption(f"Active frame: {'native source diagnostics' if frame_role == 'native-diagnostics' else 'canonical hourly analysis'}")
+            st.caption(f"Calendar: real historical UTC · {dataset.temporal.calendar_mode}")
+            if pressure_mode == "Measured station pressure with fallback median":
+                st.caption(f"Pressure: measured station values; fallback median {active_pressure:,.0f} Pa")
+            else:
+                st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     from epw_climate_analyzer.p6_report import set_context
     set_context(st.session_state,page=page,source=dataset.display_name,location=f"{dataset.location.city}, {dataset.location.country}",df=filtered_df,extra={"pressure mode":pressure_mode,"custom pressure":custom_pressure},site=dataset.location,source_id=dataset.climate_id)
@@ -6371,9 +6383,7 @@ def render_generated_climate_analysis(dataset) -> None:
     pages = [p for p in NAVIGATION_PAGES if p != "Compare Climates"]
     if st.session_state.get(NAVIGATION_KEY) not in pages:
         st.session_state[NAVIGATION_KEY] = "Overview"
-    st.sidebar.markdown("### Explore")
-    page = st.sidebar.radio("Analysis section", pages, format_func=navigation_label,
-                            key=NAVIGATION_KEY, label_visibility="collapsed")
+    page = _sidebar_layout.render_navigation(st,pages,globals().get("_r219_nav_area"))
     if page == "Climate File Source":
         st.session_state.setdefault("climate_source_mode", "Generate climate")
         render_climate_file_source()
@@ -6395,9 +6405,9 @@ def render_generated_climate_analysis(dataset) -> None:
     if data.empty and page!="Report":
         st.warning("The current filters remove all data.")
         return
-    st.sidebar.markdown("### Current climate")
-    st.sidebar.write(dataset.display_name)
-    st.sidebar.caption(f"{dataset.temporal.calendar_mode} · {dataset.temporal.timezone_name} · {len(data):,} hourly records")
+    climate_area=globals().get("_r219_climate_area",st.sidebar)
+    climate_area.write(dataset.display_name)
+    climate_area.caption(f"{dataset.temporal.calendar_mode} · {dataset.temporal.timezone_name} · {len(data):,} hourly records")
     with st.expander("Sources, definitions and qualification", expanded=False):
         _scope(st, product)
         st.caption("Hourly states are sampled at interval end; irradiation and precipitation cover the preceding interval. Unavailable fields remain missing.")
@@ -6457,6 +6467,9 @@ def main() -> None:
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
+    global _r219_nav_area, _r219_climate_area, _r219_filter_area, _r219_filter_panel
+    _r219_climate_area=st.sidebar.container()
+    _r219_nav_area=st.sidebar.container()
     from epw_climate_analyzer import session_reaper as reaper_runtime
     if getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R13-HF2":
         st.error("MEM-PERF R13 HF2: session shutdown module version mismatch; reload or restart once to activate the new policy.")
@@ -6466,7 +6479,7 @@ def main() -> None:
     from epw_climate_analyzer.startup_runtime import ensure_initialized
     stages=ensure_initialized()
     deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"] not in ("UTCI (conditional)","Folium")]
-    if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
+    if deferred:st.sidebar.warning("Core initialization incomplete · see Service & Diagnostics.")
     from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
     from epw_climate_analyzer import session_reaper as reaper_runtime
     from epw_climate_analyzer import chart_presentation as presentation_runtime
@@ -6496,19 +6509,31 @@ def main() -> None:
         end_phase(phase,"navigation and presentation controls",diagnostic=True)
     st.session_state["_mem_r2_chart_ordinal"]=0
     st.session_state["_plotly_element_counter"]=0
-    from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar
-    begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
-    profile_diagnostic("report sidebar status",render_report_status,st)
-    render_sidebar(st)
+    from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_service_memory
+    high_pressure=begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
+    _r219_filter_area=st.sidebar.container()
+    _r219_filter_panel=None
+    report_area=st.sidebar.container()
+    service_area=st.sidebar.container()
+    if high_pressure and not st.session_state.get(_sidebar_layout.SERVICE_KEY):
+        service_area.warning("High memory pressure · see Service & Diagnostics.")
+    if _sidebar_layout.render_service(st,service_area,render_service_memory):
+        pages=st.session_state.get("_r219_available_pages")
+        if pages:_sidebar_layout.render_navigation(st,pages,_r219_nav_area)
+        _r219_climate_area.caption("Service view · active climate retained")
+        return
+    profile_diagnostic("report sidebar status",render_report_status,st,report_area)
     if st.session_state.pop("_mem_r12_reset_notice",False):
         st.success("Session reset. Shared scientific runtime retained.")
     active_file = get_active_climate_file()
     active_canonical = get_active_canonical_climate()
 
     if active_file is None and active_canonical is None:
-        st.sidebar.info("Choose a climate source to start the analysis.")
+        _r219_climate_area.caption("No active climate · choose a source")
         profile_diagnostic("inactive climate source rendering",render_climate_file_source)
         return
+    if st.session_state.get(NAVIGATION_KEY) not in ("Climate File Source","Data Quality"):
+        _r219_filter_panel=_sidebar_layout.filter_panel(st,_r219_filter_area)
     if active_canonical is not None:
         from epw_climate_analyzer.engine_analysis import is_engine_dataset
         if is_engine_dataset(active_canonical):
@@ -6520,43 +6545,21 @@ def main() -> None:
     if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in NAVIGATION_PAGES:
         st.session_state[NAVIGATION_KEY] = "Overview"
 
-    st.sidebar.markdown("### Explore")
-    page = st.sidebar.radio(
-        "Analysis section",
-        NAVIGATION_PAGES,
-        format_func=navigation_label,
-        key=NAVIGATION_KEY,
-        label_visibility="collapsed",
-    )
+    page = _sidebar_layout.render_navigation(st,NAVIGATION_PAGES,globals().get("_r219_nav_area"))
 
     if page == "Climate File Source":
         render_climate_file_source()
         return
 
-    with st.sidebar.expander("Advanced calculation settings", expanded=False):
-        pressure_mode = st.selectbox(
-            "Psychrometric pressure mode",
-            [
+    pressure_mode,custom_pressure=_sidebar_layout.pressure_selection(st,page,[
                 "Normal pressure: 101325 Pa",
                 "EPW station pressure with fallback median",
                 "Altitude-derived standard atmosphere pressure",
                 "Custom constant pressure",
-            ],
-            index=1,
-            help=(
+            ],source="epw",default=1,help=(
                 "Default: use the atmospheric station pressure stored in the EPW for each hourly record. "
                 "The median valid EPW pressure is used only as a fallback when an EPW pressure value is missing or invalid."
-            ),
-        )
-        custom_pressure = None
-        if pressure_mode == "Custom constant pressure":
-            custom_pressure = st.number_input(
-                "Custom pressure [Pa]",
-                min_value=30000.0,
-                max_value=120000.0,
-                value=101325.0,
-                step=100.0,
-            )
+            ))
 
     include_psychrometrics, include_solar = page_derivation_flags(page)
     _ensure_analysis_dependencies(
@@ -6611,16 +6614,17 @@ def main() -> None:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
 
-    st.sidebar.markdown("### Current climate")
-    st.sidebar.write(f"**{epw.location.city}, {epw.location.country}**")
-    st.sidebar.caption(epw.name)
-    st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
-    with st.sidebar.expander("Data provenance", expanded=False):
-        st.caption(active_file.source)
-        if pressure_mode == "EPW station pressure with fallback median":
-            st.caption(f"Pressure: hourly EPW station values; fallback median {active_pressure:,.0f} Pa")
-        else:
-            st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
+    climate_area=globals().get("_r219_climate_area",st.sidebar)
+    climate_area.write(f"**{epw.location.city}, {epw.location.country}**")
+    climate_area.caption(epw.name)
+    climate_area.write(f"Rows in current view: {len(filtered_df):,}")
+    if page=="Data Quality":
+        with st.expander("Data provenance", expanded=False):
+            st.caption(active_file.source)
+            if pressure_mode == "EPW station pressure with fallback median":
+                st.caption(f"Pressure: hourly EPW station values; fallback median {active_pressure:,.0f} Pa")
+            else:
+                st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     from epw_climate_analyzer.p6_report import set_context
     import hashlib

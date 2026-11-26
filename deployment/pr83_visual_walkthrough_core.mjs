@@ -1,3 +1,4 @@
+import { clickGroupedNavigation } from './r219_navigation.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -314,9 +315,7 @@ async function screenshot(page, name) {
 
 async function nav(page, label, needle) {
   const frame = await appFrame(page, 'Climate Analyzer', 30000);
-  const target = frame.getByText(label, { exact: true }).last();
-  if (!(await target.count().catch(() => 0))) throw new Error(`Navigation missing: ${label}`);
-  await target.click({ force: true, timeout: 10000 });
+  await clickGroupedNavigation(frame,label);
   return await appFrame(page, needle, 60000);
 }
 
@@ -398,7 +397,7 @@ try {
   await sleep(700);
   await screenshot(page, '02-monthly-core-selected.png');
   await load.click({ timeout: 15000 });
-  await appFrame(page, 'Summary — Overview', 180000);
+  await appFrame(page, 'Overview', 180000);
   // Only the successful provider-load transition proves that the three staged
   // checkbox edits reached Python. Do not mark selection success before this.
   report.checks.required_core_variables_selected = true;

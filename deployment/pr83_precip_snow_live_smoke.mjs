@@ -1,3 +1,4 @@
+import { clickGroupedNavigation } from './r219_navigation.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -313,23 +314,21 @@ async function visibleOptionTexts(page, frame) {
   return values;
 }
 
-async function sidebarNavigation(page, name) {
-  const started = performance.now();
-  while (performance.now() - started < 120_000) {
-    const frame = await appFrame(page, 'Climate Analyzer', 10_000);
-    const candidates = [
-      frame.locator('section[data-testid="stSidebar"] label').filter({ hasText: name }).last(),
-      frame.locator('section[data-testid="stSidebar"]').getByText(name, { exact: true }).last(),
-      frame.getByRole('radio', { name, exact: true }).last(),
-    ];
-    for (const candidate of candidates) {
-      if (!(await candidate.count().catch(() => 0))) continue;
-      try { await candidate.click({ force: true, timeout: 5_000 }); await sleep(500); return; }
-      catch { /* retry */ }
-    }
-    await sleep(400);
+async function sidebarNavigation(page,name) {
+  const started=performance.now();
+  let lastError=null;
+  while(performance.now()-started<120000) {
+    const frame=await appFrame(page,'Climate Analyzer',10000);
+    try {
+      const contract=await clickGroupedNavigation(frame,name);
+      report.navigation_contract=contract;
+      if(process.env.R219_ALLOW_LEGACY_NAV!=='1'&&contract!=='r219-server-groups')
+        throw new Error('Candidate did not expose R2.19 navigation');
+      await sleep(500);
+      return;
+    } catch(error) { lastError=error; await sleep(400); }
   }
-  throw new Error(`Sidebar navigation item not found: ${name}`);
+  throw new Error(`Sidebar navigation item not found: ${name}; last error: ${lastError}`);
 }
 
 async function analysisCombo(frame, timeoutMs = 30_000) {
