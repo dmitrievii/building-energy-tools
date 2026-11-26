@@ -123,6 +123,9 @@ def capture_control(st,fig,key):
     button_key="p6_capture_"+str(context.get("page"))+"_"+str(key)
     saved_context={**context,"keyed chart settings":_capture_settings(st.session_state),
                    "temperature thresholds":list(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))}
+    meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+    if "r219_heatmap_presentation" in meta:
+        saved_context["heatmap presentation"]=dict(meta["r219_heatmap_presentation"])
     interpretation=st.session_state.get(INTERPRETATION_KEY,"")
     state=st.session_state
     token=state.get("_p6_page_token")

@@ -29,6 +29,7 @@ def render_atlas(df,context,reference_df=None):
     context=atlas_duration_context(context,st.session_state)
     from .heatmap_presentation import context_from_state
     context={**context,"heatmap presentation":context_from_state(st.session_state)}
+    st.caption("Heat maps: labelled contours for eligible continuous grids; discrete grids retain tiles.")
     coverage=st.radio("Coverage",LEVELS,index=2,key="p66_coverage")
     try:
         prepared=prepare_frame(df)

@@ -9,7 +9,7 @@ patches.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import math
 from typing import Any, Mapping, MutableMapping
 
@@ -541,9 +541,9 @@ def merge_plotly_config(
 
 
 def render_presentation_sidebar(st: Any) -> None:
-    """Render the single global presentation control surface for this rerun."""
+    """Frequently used global visual controls; separate background and export."""
     ensure_default_state(st.session_state)
-    with st.sidebar.expander("Presentation", expanded=False):
+    with st.sidebar.expander("Appearance", expanded=False):
         st.selectbox(
             "Canvas",
             CANVAS_OPTIONS,
@@ -573,21 +573,10 @@ def render_presentation_sidebar(st: Any) -> None:
             "Chart background", BACKGROUND_OPTIONS, key=KEY_BACKGROUND,
             help="Applies globally to all charts and image exports. Transparent PNG preserves the alpha channel for architectural overlays.",
         )
-        from .heatmap_presentation import MODES,TILES
-        st.selectbox("Heat-map visualization",MODES,key=_key("heatmap_mode"),
-                     help="Continuous ordered grids support contours; discrete classes, circular quantities and incomplete grids retain tiles.")
-        if st.session_state.get(_key("heatmap_mode"))!=TILES:
-            st.number_input("Contour interval (0 = automatic)",min_value=0.0,step=0.5,key=_key("contour_interval"),
-                            help="In the chart quantity’s units. Excessively dense or empty contour levels retain tiles.")
-            st.checkbox("Contour labels",key=_key("contour_labels"))
-            st.slider("Contour line thickness [px]",0.5,3.0,step=0.25,key=_key("contour_width"))
-            st.selectbox("Contour line contrast",["Auto","Dark","Light"],key=_key("contour_contrast"))
         st.checkbox("Show chart title", key=_key("show_title"))
         st.checkbox("Show legend", key=_key("show_legend"))
         st.checkbox("Show grid", key=_key("show_grid"))
         st.slider("Line thickness multiplier", 0.5, 3.0, step=0.25, key=_key("line_scale"))
-        st.selectbox("Image export format", ["PNG", "SVG"],key=_key("export_format"),
-                     help="WebGL traces are rasterized inside SVG. PNG retains the full rendered scene.")
         st.slider("Compass rotation [deg clockwise]", -180,180,step=5,key=_key("north_rotation"),
                   help="Only compass-based polar diagrams. Physical azimuth and north labels rotate together.")
         st.text_input("Manual numeric axis title (exact match)",key=_key("axis_title"),
@@ -597,13 +586,6 @@ def render_presentation_sidebar(st: Any) -> None:
             st.number_input("Axis maximum",key=_key("axis_max"))
             if st.session_state[_key("axis_min")] >= st.session_state[_key("axis_max")]:
                 st.warning("Axis minimum must be below maximum; range override ignored.")
-        st.select_slider(
-            "Export scale",
-            options=(1, 2, 3),
-            key=KEY_EXPORT_SCALE,
-            format_func=lambda value: f"{value}×",
-            help="Resolution multiplier used by Plotly's Download plot as PNG action.",
-        )
         if st.session_state.get(KEY_CANVAS, DEFAULT_CANVAS) == CANVAS_CUSTOM:
             c1, c2 = st.columns(2)
             c1.number_input(
@@ -620,6 +602,15 @@ def render_presentation_sidebar(st: Any) -> None:
                 step=20,
                 key=KEY_CUSTOM_HEIGHT,
             )
+        st.button(
+            "Reset chart appearance",
+            key="chart_presentation_reset",
+            on_click=reset_state,
+            args=(st.session_state,),
+            use_container_width=True,
+        )
+
+    with st.sidebar.expander("Architectural background",expanded=False):
         st.checkbox("Architectural reference image",value=False,key=_key("underlay_enabled"),
                     help="Only 2D compass polar charts; image remains local to this session.")
         if st.session_state.get(_key("underlay_enabled")):
@@ -629,13 +620,16 @@ def render_presentation_sidebar(st: Any) -> None:
             st.slider("Reference vertical offset",-.75,.75,0.,.025,key=_key("underlay_y"))
             st.slider("Reference rotation [° clockwise]",-180,180,0,5,key=_key("underlay_rotation"))
             st.slider("Reference opacity",.1,1.,.75,.05,key=_key("underlay_opacity"))
-            st.caption("Position, scale and rotate the plan relative to the compass chart. This is an illustration, not georeferencing.")
-        st.button(
-            "Reset chart appearance",
-            key="chart_presentation_reset",
-            on_click=reset_state,
-            args=(st.session_state,),
-            use_container_width=True,
+            st.caption("Position, scale and rotate the plan relative to the compass chart.")
+
+    with st.sidebar.expander("Export settings",expanded=False):
+        st.selectbox("Image export format",["PNG","SVG"],key=_key("export_format"))
+        st.select_slider(
+            "Export scale",
+            options=(1, 2, 3),
+            key=KEY_EXPORT_SCALE,
+            format_func=lambda value: f"{value}×",
+            help="Resolution multiplier used by Plotly's Download plot as PNG action.",
         )
 
 
@@ -659,6 +653,7 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
     # Per-session ordinal; avoid a fresh process-global wrapper and a shared
     # closure counter every rerun. The original callable remains stable.
     st.session_state["_mem_r5_capture_index"]=0
+    st.session_state["_r219_heatmap_occurrences"]={}
     if getattr(st.plotly_chart,"_ige_r5_presentation_wrapper",False):
         return
 
@@ -668,7 +663,15 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         settings = settings_from_state(st.session_state)
         from .calendar_heatmap_axes import set_period_axis_scope
         set_period_axis_scope(fig,context=st.session_state.get("_p6_report_context"))
+        from .heatmap_controls import local_heatmap_settings
+        local=local_heatmap_settings(st,fig)
+        settings=replace(settings,heatmap_mode=local["mode"],contour_interval=local["interval"],
+                         contour_labels=local["labels"],contour_width=local["width"],contour_contrast=local["contrast"])
         apply_chart_presentation(fig, settings)
+        if any(t.type=="heatmap" for t in fig.data):
+            meta=dict(fig.layout.meta) if isinstance(fig.layout.meta,dict) else {}
+            meta["r219_heatmap_presentation"]=local
+            fig.update_layout(meta=meta)
         meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
         upload=st.session_state.get(_key("underlay_file"))
         if st.session_state.get(_key("underlay_enabled"),False) and upload is not None and meta.get("compass_polar"):

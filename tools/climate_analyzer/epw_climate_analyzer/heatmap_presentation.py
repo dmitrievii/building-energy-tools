@@ -202,8 +202,5 @@ def settings_from_context(context):
     return settings if isinstance(settings,dict) else {}
 
 def context_from_state(state):
-    return {"mode":state.get("chart_presentation_heatmap_mode",TILES),
-            "interval":state.get("chart_presentation_contour_interval",0.),
-            "labels":state.get("chart_presentation_contour_labels",True),
-            "width":state.get("chart_presentation_contour_width",1.),
-            "contrast":state.get("chart_presentation_contour_contrast","Auto")}
+    """Defaults for automatic Atlas and standard-report diagrams, not explorer state."""
+    return {"mode":CONTOURS,"interval":0.,"labels":True,"width":1.,"contrast":"Auto"}
