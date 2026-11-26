@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from r219_apptest_navigation import navigate_app
 from unittest.mock import patch
 import zipfile
 
@@ -239,7 +240,7 @@ class ActualStationRouteTests(unittest.TestCase):
             for key in ("CH:BAS","CH:ALT"):
                 if key=="CH:ALT":
                     from epw_climate_analyzer.engine_ui import STATION_SOURCE
-                    app.sidebar.radio(key="climate_analyzer_navigation").set_value("Climate File Source").run();self.clean(app)
+                    navigate_app(app,"Climate File Source");self.clean(app)
                     app.selectbox(key="ige_historical_source").set_value(STATION_SOURCE).run();self.clean(app)
                 product=self.load(app,service.CATALOG[key]["label"])
                 self.assertEqual(product.report["station_key"],key)
@@ -253,9 +254,9 @@ class ActualStationRouteTests(unittest.TestCase):
                 self.assertEqual(app.session_state["active_canonical_climate"].location.station_id,key.split(":")[1])
                 for page in PAGES:
                     if page in ("Climate File Source","Overview"):continue
-                    app.sidebar.radio(key="climate_analyzer_navigation").set_value(page).run();self.clean(app)
+                    navigate_app(app,page);self.clean(app)
                     if page!="Data Quality":self.assertGreaterEqual(len(app.get("plotly_chart")),1)
-                app.sidebar.radio(key="climate_analyzer_navigation").set_value("Humidity and Psychrometrics").run();self.clean(app)
+                navigate_app(app,"Humidity and Psychrometrics");self.clean(app)
                 app.selectbox(key="humidity_analysis_type").set_value("Psychrometric chart").run();self.clean(app)
                 self.assertEqual(len(app.get("plotly_chart")),1)
                 next(x for x in app.sidebar.multiselect if x.label == "Months").set_value(["Jan"]).run();self.clean(app)

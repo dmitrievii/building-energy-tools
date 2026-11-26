@@ -2,6 +2,7 @@
 from pathlib import Path
 from dataclasses import replace
 import unittest
+from r219_apptest_navigation import navigate_app
 from unittest.mock import patch
 
 from streamlit.testing.v1 import AppTest
@@ -35,7 +36,7 @@ class F1UITests(unittest.TestCase):
         if active: app.session_state["active_climate_file"]=ClimateFilePayload("synthetic.epw",self.epw,"SYNTHETIC TEST")
         if active:
             app.run()
-            app.sidebar.radio(key="climate_analyzer_navigation").set_value("Climate File Source").run()
+            navigate_app(app,"Climate File Source")
         app.radio(key="climate_source_mode").set_value("Generate climate").run()
         app.radio(key="ige_climate_task").set_value("Future climate from selected base").run()
         self.clean(app);return app

@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from r219_apptest_navigation import navigate_app
 from unittest.mock import patch
 import zipfile
 
@@ -226,10 +227,10 @@ class StreamlitRouteTests(unittest.TestCase):
             # Exercise all admitted views through the real installed app router.
             for page in ("Temperature", "Humidity and Psychrometrics", "Solar and Radiation", "Wind and Ventilation",
                     "Sky and Daylight", "Precipitation and Snow", "Time Series and Overlay", "Data Quality"):
-                app.sidebar.radio(key="climate_analyzer_navigation").set_value(page).run(); self.clean(app)
+                navigate_app(app,page); self.clean(app)
                 if page != "Data Quality": self.assertGreaterEqual(len(app.get("plotly_chart")), 1)
             self.assertEqual(run_h.call_count, 1)
-        app.sidebar.radio(key="climate_analyzer_navigation").set_value("Climate File Source").run(); self.clean(app)
+        navigate_app(app,"Climate File Source"); self.clean(app)
         app.radio(key="ige_generation_mode").set_value("Future climate").run()
         with patch("epw_climate_analyzer.engine_ui.run_future_pilot_product", wraps=application.run_future_pilot_product) as run_f:
             app.button(key="FormSubmitter:ige_future_request-Generate future year").click().run(); self.clean(app)
@@ -239,7 +240,7 @@ class StreamlitRouteTests(unittest.TestCase):
             self.assertEqual(len(app.download_button), 4)
             app.button(key="ige_explore").click().run(); self.clean(app)
             self.assertEqual(app.session_state["active_canonical_climate"].temporal.calendar_mode, "climatology")
-            app.sidebar.radio(key="climate_analyzer_navigation").set_value("Humidity and Psychrometrics").run(); self.clean(app)
+            navigate_app(app,"Humidity and Psychrometrics"); self.clean(app)
             self.assertEqual(len(app.get("plotly_chart")), 1)
             self.assertEqual(run_f.call_count, 1)
             self.assertTrue(any("not a forecast" in e.value for e in app.info))

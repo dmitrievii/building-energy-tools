@@ -6,6 +6,7 @@ from hashlib import sha256
 import io
 from pathlib import Path
 import unittest
+from r219_apptest_navigation import navigate_app
 from unittest.mock import patch
 
 import numpy as np
@@ -135,9 +136,9 @@ class DisplayTests(unittest.TestCase):
             app.button(key="ige_explore").click().run()
             self.assertEqual([e.message for e in app.exception], [])
             self.assertTrue(any("EPW Climate Analyzer" in h.value for h in app.header))
-            app.sidebar.radio(key="climate_analyzer_navigation").set_value("Temperature").run()
+            navigate_app(app,"Temperature")
             self.assertTrue(any(s.label == "Analysis type" for s in app.selectbox))
-            app.sidebar.radio(key="climate_analyzer_navigation").set_value("Humidity and Psychrometrics").run()
+            navigate_app(app,"Humidity and Psychrometrics")
             app.selectbox(key="humidity_analysis_type").set_value("Psychrometric chart").run()
             self.assertTrue(any(r.label == "Representation" for r in app.radio))
             self.assertEqual([e.message for e in app.exception], [])
