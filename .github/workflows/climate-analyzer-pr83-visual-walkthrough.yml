@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
+      - 'deployment/r219_navigation.mjs'
+      - 'tools/climate_analyzer/epw_climate_analyzer/sidebar_layout.py'
       - 'deployment/pr83_visual_walkthrough_core.mjs'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_streamlit_surface.py'

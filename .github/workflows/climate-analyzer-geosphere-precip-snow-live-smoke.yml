@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'deployment/r219_navigation.mjs'
+      - 'tools/climate_analyzer/epw_climate_analyzer/sidebar_layout.py'
       - 'deployment/geosphere_precip_snow_provider_probe.py'
       - 'deployment/geosphere_precip_snow_live_smoke.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
@@ -15,6 +17,7 @@ on:
       - main
     paths:
       - 'tools/climate_analyzer/**'
+      - 'deployment/r219_navigation.mjs'
       - 'deployment/geosphere_precip_snow_provider_probe.py'
       - 'deployment/geosphere_precip_snow_live_smoke.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
@@ -26,7 +29,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: climate-analyzer-geosphere-precip-snow-live-smoke
+  group: climate-analyzer-geosphere-precip-snow-live-smoke-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      TARGET_URL: https://building-climate-analyzer.streamlit.app/
+      TARGET_URL: ${{ github.event_name == 'pull_request' && 'http://127.0.0.1:8501/' || 'https://building-climate-analyzer.streamlit.app/' }}
+      R219_ALLOW_LEGACY_NAV: ${{ github.event_name == 'pull_request' && '0' || '1' }}
       AUDIT_OUTPUT_DIR: artifacts/geosphere-precip-snow-smoke
       GEOSPHERE_SMOKE_FIXTURE: artifacts/geosphere-precip-snow-smoke/provider-fixture.json
       CHROME_PATH: /usr/bin/google-chrome
@@ -62,6 +66,23 @@ jobs:
             --output "$GEOSPHERE_SMOKE_FIXTURE" \
             --timeout 60
 
+      - name: Start exact PR candidate Streamlit
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p "$AUDIT_OUTPUT_DIR"
+          nohup python -m streamlit run tools/climate_analyzer/app.py \
+            --server.headless true --server.address 127.0.0.1 --server.port 8501 \
+            > "$AUDIT_OUTPUT_DIR/candidate-streamlit.log" 2>&1 &
+          for i in $(seq 1 90); do
+            if curl --fail --silent "$TARGET_URL"_stcore/health >/dev/null; then
+              echo 'Candidate Streamlit is healthy.'
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$AUDIT_OUTPUT_DIR/candidate-streamlit.log" || true
+          exit 1
+
       - name: Show Chrome version
         run: |
           test -x "$CHROME_PATH"
@@ -70,8 +91,16 @@ jobs:
       - name: Install browser smoke dependency
         run: npm install --no-save playwright-core@1.55.0
 
-      - name: Exercise live precipitation and snow route
+      - name: Exercise provider-backed precipitation and snow route
         run: node deployment/pr83_precip_snow_live_smoke.mjs
+
+      - name: Reject candidate runtime errors
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          if grep -E 'Traceback \(most recent call last\)|Uncaught app execution' "$AUDIT_OUTPUT_DIR/candidate-streamlit.log"; then
+            cat "$AUDIT_OUTPUT_DIR/candidate-streamlit.log"
+            exit 1
+          fi
 
       - name: Upload provider-backed smoke evidence
         if: always()

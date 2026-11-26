@@ -316,12 +316,19 @@ async function visibleOptionTexts(page, frame) {
 
 async function sidebarNavigation(page,name) {
   const started=performance.now();
+  let lastError=null;
   while(performance.now()-started<120000) {
     const frame=await appFrame(page,'Climate Analyzer',10000);
-    try { await clickGroupedNavigation(frame,name); await sleep(500); return; }
-    catch { await sleep(400); }
+    try {
+      const contract=await clickGroupedNavigation(frame,name);
+      report.navigation_contract=contract;
+      if(process.env.R219_ALLOW_LEGACY_NAV!=='1'&&contract!=='r219-server-groups')
+        throw new Error('Candidate did not expose R2.19 navigation');
+      await sleep(500);
+      return;
+    } catch(error) { lastError=error; await sleep(400); }
   }
-  throw new Error(`Sidebar navigation item not found: ${name}`);
+  throw new Error(`Sidebar navigation item not found: ${name}; last error: ${lastError}`);
 }
 
 async function analysisCombo(frame, timeoutMs = 30_000) {
