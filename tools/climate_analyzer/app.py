@@ -2043,7 +2043,8 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     that aligns equivalent calendar positions across the selected years.
     """
     area=globals().get("_r219_filter_area",st.sidebar)
-    panel=_sidebar_layout.filter_panel(st,area)
+    panel=globals().get("_r219_filter_panel")
+    if panel is None:panel=_sidebar_layout.filter_panel(st,area)
     if df.empty or not isinstance(df.index, pd.DatetimeIndex):
         st.session_state["_active_filtered_export_df"] = df
         return df
@@ -2051,6 +2052,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     source_start = pd.Timestamp(df.index.min())
     source_end = pd.Timestamp(df.index.max())
     years = available_years(df)
+    _sidebar_layout.restore_filters(st.session_state,source_start,source_end,years)
     panel.caption(
         f"Available: {source_start.strftime('%d %b %Y %H:%M')} → {source_end.strftime('%d %b %Y %H:%M')}"
     )
@@ -2128,8 +2130,8 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
 
     # Existing recurring month/hour controls are retained: they now refine the
     # absolute range instead of acting as the only global time filter.
-    selected_month_names = panel.multiselect("Months", list(MONTHS.keys()), default=list(MONTHS.keys()))
-    selected_hours = panel.slider("Hour range", min_value=0, max_value=23, value=(0, 23))
+    selected_month_names = panel.multiselect("Months", list(MONTHS.keys()), default=list(MONTHS.keys()),key="global_months_hourly_source")
+    selected_hours = panel.slider("Hour range", min_value=0, max_value=23, value=(0, 23),key="global_hours_hourly_source")
     months = [MONTHS[m] for m in selected_month_names]
     hours = list(range(selected_hours[0], selected_hours[1] + 1))
     filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
@@ -2148,6 +2150,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     # it in transient Streamlit session state avoids duplicating filter logic in
     # every chart renderer.
     st.session_state["_active_filtered_export_df"] = filtered
+    _sidebar_layout.remember_filters(st.session_state)
     _sidebar_layout.filter_summary(area,st.session_state["_active_global_filter_spec"])
     return filtered
 
@@ -6464,7 +6467,7 @@ def main() -> None:
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
-    global _r219_nav_area, _r219_climate_area, _r219_filter_area
+    global _r219_nav_area, _r219_climate_area, _r219_filter_area, _r219_filter_panel
     _r219_climate_area=st.sidebar.container()
     _r219_nav_area=st.sidebar.container()
     from epw_climate_analyzer import session_reaper as reaper_runtime
@@ -6507,14 +6510,20 @@ def main() -> None:
     st.session_state["_mem_r2_chart_ordinal"]=0
     st.session_state["_plotly_element_counter"]=0
     from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_service_memory
-    begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
+    high_pressure=begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
     _r219_filter_area=st.sidebar.container()
-    profile_diagnostic("report sidebar status",render_report_status,st)
+    _r219_filter_panel=None
+    report_area=st.sidebar.container()
     service_area=st.sidebar.container()
+    if high_pressure and not st.session_state.get(_sidebar_layout.SERVICE_KEY):
+        service_area.warning("High memory pressure · see Service & Diagnostics.")
     if _sidebar_layout.render_service(st,service_area,render_service_memory):
         pages=st.session_state.get("_r219_available_pages")
         if pages:_sidebar_layout.render_navigation(st,pages,_r219_nav_area)
+        _r219_climate_area.caption("Service view · active climate retained")
         return
+    with report_area:
+        profile_diagnostic("report sidebar status",render_report_status,st)
     if st.session_state.pop("_mem_r12_reset_notice",False):
         st.success("Session reset. Shared scientific runtime retained.")
     active_file = get_active_climate_file()
@@ -6524,6 +6533,8 @@ def main() -> None:
         _r219_climate_area.caption("No active climate · choose a source")
         profile_diagnostic("inactive climate source rendering",render_climate_file_source)
         return
+    if st.session_state.get(NAVIGATION_KEY) not in ("Climate File Source","Data Quality"):
+        _r219_filter_panel=_sidebar_layout.filter_panel(st,_r219_filter_area)
     if active_canonical is not None:
         from epw_climate_analyzer.engine_analysis import is_engine_dataset
         if is_engine_dataset(active_canonical):

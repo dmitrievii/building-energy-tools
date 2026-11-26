@@ -222,7 +222,8 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
     st = legacy.st
     from . import sidebar_layout as layout
     area=getattr(legacy,"_r219_filter_area",st.sidebar)
-    panel=layout.filter_panel(st,area)
+    panel=getattr(legacy,"_r219_filter_panel",None)
+    if panel is None:panel=layout.filter_panel(st,area)
     if df.empty:
         st.session_state["_active_filtered_export_df"] = df
         return df
@@ -230,6 +231,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
     source_start = pd.Timestamp(df.index.min())
     source_end = pd.Timestamp(df.index.max())
     years = legacy.available_years(df)
+    layout.restore_filters(st.session_state,source_start,source_end,years)
     panel.caption(f"Available: {source_start.strftime('%b %Y')} → {source_end.strftime('%b %Y')}")
     panel.caption("Native temporal resolution: monthly. Hour/day filters are not applicable.")
 
@@ -316,6 +318,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         "native_resolution": "monthly",
     }
     st.session_state["_active_filtered_export_df"] = filtered
+    layout.remember_filters(st.session_state)
     layout.filter_summary(area,st.session_state["_active_global_filter_spec"])
     return filtered
 

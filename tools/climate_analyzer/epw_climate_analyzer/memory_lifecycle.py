@@ -348,6 +348,8 @@ def begin_rerun(state,page):
         # Preserve ready downloads during routine navigation. New exports or
         # an explicit cleanup are the responsibility of the corresponding action.
         cleanup(state,"Automatic memory pressure cleanup",derived=True,disk=True,shared_caches=True,private_caches=True)
+        snapshot=memory_snapshot()
+    return pressure_high(snapshot)
 
 def _mib(value):
     return f"{value/m.MIB:,.0f} MiB" if value is not None else "Unavailable"

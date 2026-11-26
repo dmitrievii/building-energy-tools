@@ -155,6 +155,19 @@ def reset_state(state: MutableMapping[str, Any]) -> None:
     state[_key("underlay_enabled")] = False
 
 
+def reset_appearance(state):
+    """Reset only the global appearance; retain background and chart-local state."""
+    for key,value in ((KEY_CANVAS,DEFAULT_CANVAS),(KEY_WIDTH,DEFAULT_WIDTH_PERCENT),
+                      (KEY_FONT,DEFAULT_FONT_SIZE),(KEY_BACKGROUND,DEFAULT_BACKGROUND),
+                      (KEY_CUSTOM_WIDTH,DEFAULT_CUSTOM_WIDTH),(KEY_CUSTOM_HEIGHT,DEFAULT_CUSTOM_HEIGHT)):
+        state[key]=value
+    for name in ("show_title","show_legend","show_grid","line_scale","north_rotation","axis_title","axis_min","axis_max"):
+        state[_key(name)]=EXTRA_DEFAULTS[name]
+
+def reset_underlay_position(state):
+    for name,value in (("underlay_scale",1.),("underlay_x",0.),("underlay_y",0.),("underlay_rotation",0),("underlay_opacity",.75)):
+        state[_key(name)]=value
+
 def ensure_default_state(state: MutableMapping[str, Any]) -> None:
     """Seed widget state once so controls never fight explicit widget defaults."""
     state.setdefault(KEY_CANVAS, DEFAULT_CANVAS)
@@ -605,7 +618,7 @@ def render_presentation_sidebar(st: Any) -> None:
         st.button(
             "Reset chart appearance",
             key="chart_presentation_reset",
-            on_click=reset_state,
+            on_click=reset_appearance,
             args=(st.session_state,),
             use_container_width=True,
         )
@@ -613,14 +626,15 @@ def render_presentation_sidebar(st: Any) -> None:
     with st.sidebar.expander("Architectural background",expanded=False):
         st.checkbox("Architectural reference image",value=False,key=_key("underlay_enabled"),
                     help="Only 2D compass polar charts; image remains local to this session.")
-        if st.session_state.get(_key("underlay_enabled")):
-            st.file_uploader("Reference plan / image",type=["png","jpg","jpeg","webp"],key=_key("underlay_file"))
-            st.slider("Reference image scale",.25,2.,1.,.05,key=_key("underlay_scale"))
-            st.slider("Reference horizontal offset",-.75,.75,0.,.025,key=_key("underlay_x"))
-            st.slider("Reference vertical offset",-.75,.75,0.,.025,key=_key("underlay_y"))
-            st.slider("Reference rotation [° clockwise]",-180,180,0,5,key=_key("underlay_rotation"))
-            st.slider("Reference opacity",.1,1.,.75,.05,key=_key("underlay_opacity"))
-            st.caption("Position, scale and rotate the plan relative to the compass chart.")
+        upload=st.file_uploader("Reference plan / image",type=["png","jpg","jpeg","webp"],key=_key("underlay_file"))
+        enabled=bool(st.session_state.get(_key("underlay_enabled")) and upload is not None)
+        st.slider("Reference image scale",.25,2.,1.,.05,key=_key("underlay_scale"),disabled=not enabled)
+        st.slider("Reference horizontal offset",-.75,.75,0.,.025,key=_key("underlay_x"),disabled=not enabled)
+        st.slider("Reference vertical offset",-.75,.75,0.,.025,key=_key("underlay_y"),disabled=not enabled)
+        st.slider("Reference rotation [° clockwise]",-180,180,0,5,key=_key("underlay_rotation"),disabled=not enabled)
+        st.slider("Reference opacity",.1,1.,.75,.05,key=_key("underlay_opacity"),disabled=not enabled)
+        st.button("Reset image position",key="_r219_reset_underlay",on_click=reset_underlay_position,args=(st.session_state,),disabled=not enabled)
+        st.caption("Position, scale and rotate the plan relative to the compass chart.")
 
     with st.sidebar.expander("Export settings",expanded=False):
         st.selectbox("Image export format",["PNG","SVG"],key=_key("export_format"))

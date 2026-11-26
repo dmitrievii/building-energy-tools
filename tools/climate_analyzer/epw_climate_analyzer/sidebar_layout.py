@@ -36,9 +36,11 @@ def render_navigation(st,pages,area=None):
     area=area if area is not None else st.sidebar
     state=st.session_state
     pages=tuple(pages)
+    if not pages:return None
     if state.get(NAVIGATION_KEY) not in pages:
         state[NAVIGATION_KEY]="Overview" if "Overview" in pages else pages[0]
     active=state[NAVIGATION_KEY]
+    state["_r219_available_pages"]=pages
     area.markdown("**Analysis**")
     for group,members in grouped_pages(pages):
         key="_r219_nav_"+group.replace(" ","_")
@@ -76,9 +78,34 @@ def render_service(st,area,render_memory):
     render_memory(st)
     return True
 
+FILTER_STORE="_r219_filter_preferences"
+FILTER_KEYS=("global_data_range_mode","global_data_range_year","global_data_range_start_date",
+             "global_data_range_end_date","global_data_range_start_time","global_data_range_end_time",
+             "global_time_basis","global_months_hourly_source","global_hours_hourly_source",
+             "global_months_monthly_source","historical_analysis_clock","historical_quality_policy",
+             "historical_timeseries_resolution","historical_native_derived")
+
+def reset_filters(state):
+    for key in FILTER_KEYS:state.pop(key,None)
+    state.pop(FILTER_STORE,None)
+
+def restore_filters(state,source_start=None,source_end=None,years=()):
+    for key,value in state.get(FILTER_STORE,{}).items():
+        if key not in FILTER_KEYS or key in state:continue
+        if key=="global_data_range_year" and years and value not in years:continue
+        if key.endswith("_date") and source_start is not None and not source_start.date()<=value<=source_end.date():continue
+        state[key]=value
+
+def remember_filters(state):
+    saved=dict(state.get(FILTER_STORE,{}))
+    saved.update({key:state[key] for key in FILTER_KEYS if key in state})
+    state[FILTER_STORE]=saved
+
 def filter_panel(st,area=None):
     area=area if area is not None else st.sidebar
-    return area.expander("Data filters",expanded=False)
+    panel=area.expander("Data filters",expanded=False)
+    panel.button("Reset filters",key="_r219_reset_filters",on_click=reset_filters,args=(st.session_state,))
+    return panel
 
 def filter_summary(panel,spec):
     if not isinstance(spec,dict):return
