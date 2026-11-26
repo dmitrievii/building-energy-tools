@@ -11,3 +11,9 @@
 
 ## Evidence required before merge
 Run the full regression suite, strict palette/interpretation audit, Cloud qualification and browser smoke workflows. The new state tests cover independent preferences, bounded retention, filter replay, report transformation, actual Streamlit widget reruns and explicit service admission. Browser selectors have been migrated to the grouped navigation. Production readiness requires successful CI and live container verification. No change to scientific algorithms or frozen release manifests.
+
+## HF1 integration closure
+
+R2.19 initial CI: 1,301 tests, 1,295 passes, one pressure-UI contract failure and five obsolete flat-navigation widget errors. Strict palette and interpretation audit passed. Browser evidence confirmed a genuine historical-route TypeError: the source-parity wrapper of the clock selector accepted only one argument after the new filter container was introduced. Both clock and observation-quality wrappers now forward the explicit container, while the Compare Climates duplicate-widget guard is retained. The browser navigation helper checks the real native details open state and scopes clicks to the chosen group. The existing public-route acceptance tests click the new widgets, retaining their scientific and download assertions. The pressure test asserts the same physical station-pressure default through the new contextual route. Four historical test-source changes are explicitly reviewed for current-tree Cloud compatibility; the frozen manifest remains unchanged.
+
+HF1 must pass the actual CI campaign before production admission.

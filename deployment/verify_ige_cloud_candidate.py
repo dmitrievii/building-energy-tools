@@ -34,6 +34,12 @@ CURRENT_COMPATIBILITY_PATHS = frozenset({
     "tools/climate_analyzer/epw_climate_analyzer/geosphere.py",
     "tools/climate_analyzer/epw_climate_analyzer/station_year_ui.py",
     "tools/climate_analyzer/tests/test_ige_h1_station_year_ui.py",
+    # R2.19 HF1: drive the new grouped UI widgets in the retained route
+    # regressions; frozen physical products, assertions and evidence remain.
+    "tools/climate_analyzer/tests/test_ige_a15.py",
+    "tools/climate_analyzer/tests/test_ige_f1_selected_future_ui.py",
+    "tools/climate_analyzer/tests/test_ige_u1.py",
+    "tools/climate_analyzer/tests/test_ige_workspace_ux.py",
 })
 
 
