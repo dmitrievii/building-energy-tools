@@ -270,6 +270,20 @@ def catalogue(df,context,coverage=FULL):
     for x,y in itertools.combinations(paired,2):
         for style in ("scatter","density"):
             add(REL,f"{LABELS[x]} × {LABELS[y]} · {style}","joint",x,UNITS[x],(y,style),ok=hourly)
+    # Anomaly figures are opt-in: the report must state a selected historical
+    # reference interval, never silently use the target period as climatology.
+    from .climate_anomalies import QUANTITIES as ANOMALY_QUANTITIES, VIEWS as ANOMALY_VIEWS, is_historical
+    reference=context.get("anomaly reference years") if isinstance(context,dict) else None
+    if reference and len(reference)==2 and is_historical(df):
+        lo,hi=map(int,reference)
+        for c in context.get("anomaly quantities",()):
+            if c not in ANOMALY_QUANTITIES or c not in df:continue
+            q=ANOMALY_QUANTITIES[c]
+            for view in (ANOMALY_VIEWS[2:] if coverage==REP else ANOMALY_VIEWS):
+                target_years=(years[-1:] if coverage!=FULL else years) if view in ANOMALY_VIEWS[:2] else (None,)
+                for year in target_years:
+                    suffix=f" · {year}" if year is not None else ""
+                    add("Climate Anomalies",f"{q.label} · {view.lower()}{suffix} · reference {lo}–{hi}","climate_anomaly",c,q.anomaly_unit,(lo,hi,view,year))
     # Explicit unavailable/non-enumerated cases remain in the audit manifest.
     for chap,title,reason in [(TEMP,"Calculated ground-temperature depth animations","Requires EPW ground model or explicitly assigned measured profile; animation not static report."),(RAIN,"Empirical precipitation IDF","Requires independently verified native historical precipitation including ≥10 complete years."),(REL,"Critical event context viewer","Requires selected event and surrounding variables; arbitrary event combinations not enumerated."),("Compare Climates","Multi-climate comparison diagrams","Requires explicit comparison basket, not single active climate."),("Data Quality","Provider-specific diagnostic figures","Provider-specific diagnostics remain on Data Quality page.")]:
         add(chap,title,"not_registered",args=(title,),ok=False,reason=reason)
