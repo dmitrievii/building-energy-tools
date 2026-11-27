@@ -211,26 +211,28 @@ def apply(fig, arrangement=CALENDAR_ANGLE, *, mode="Tiles", interval=0., labels=
             ticks=np.arange(0,n,13)
             radialtext=[f"W{k+1:02d}" for k in ticks]
         radialvals=hole+(1-hole)*np.asarray(ticks)/n
-    # Shared colouraxis is reused unchanged. For standalone heatmaps transfer
-    # the complete original colour contract, including categorical tick text.
-    if t.coloraxis:
-        marker=dict(color=values,coloraxis=t.coloraxis,line=dict(width=0))
-        colorbar=getattr(fig.layout,t.coloraxis).colorbar
-    else:
-        lo=t.zmin if t.zmin is not None else float(values.min())
-        hi=t.zmax if t.zmax is not None else float(values.max())
-        marker=dict(color=values,colorscale=t.colorscale or "Viridis",
-                    cmin=lo,cmax=hi,reversescale=t.reversescale,
-                    showscale=t.showscale is not False,
-                    colorbar=t.colorbar.to_plotly_json(),line=dict(width=0))
-        if t.zmid is not None and t.zmin is None and t.zmax is None:marker["cmid"]=t.zmid
-        colorbar=t.colorbar
-    unit=str(colorbar.title.text or "")
-    custom=[[labels[j],f"{h[i]:02d}:00–{h[i]+1:02d}:00",float(z[i,j])] for i,j in zip(rr,cc)]
-    layer=go.Barpolar(theta=angle,r=thick,base=base,width=widths,thetaunit="degrees",
-        marker=marker,customdata=custom,showlegend=False,name="Calendar cells",
-        hovertemplate="%{customdata[0]} · %{customdata[1]}<br>%{customdata[2]:.4g} "+unit+"<extra></extra>",
-        meta={LAYER:True,"presentation_only_trace":True})
+    layer=None
+    if status["mode"]!="Contours":
+        # Shared colouraxis is reused unchanged. For standalone heatmaps transfer
+        # the complete original colour contract, including categorical tick text.
+        if t.coloraxis:
+            marker=dict(color=values,coloraxis=t.coloraxis,line=dict(width=0))
+            colorbar=getattr(fig.layout,t.coloraxis).colorbar
+        else:
+            lo=t.zmin if t.zmin is not None else float(values.min())
+            hi=t.zmax if t.zmax is not None else float(values.max())
+            marker=dict(color=values,colorscale=t.colorscale or "Viridis",
+                        cmin=lo,cmax=hi,reversescale=t.reversescale,
+                        showscale=t.showscale is not False,
+                        colorbar=t.colorbar.to_plotly_json(),line=dict(width=0))
+            if t.zmid is not None and t.zmin is None and t.zmax is None:marker["cmid"]=t.zmid
+            colorbar=t.colorbar
+        unit=str(colorbar.title.text or "")
+        custom=[[labels[j],f"{h[i]:02d}:00–{h[i]+1:02d}:00",float(z[i,j])] for i,j in zip(rr,cc)]
+        layer=go.Barpolar(theta=angle,r=thick,base=base,width=widths,thetaunit="degrees",
+            marker=marker,customdata=custom,showlegend=False,name="Calendar cells",
+            hovertemplate="%{customdata[0]} · %{customdata[1]}<br>%{customdata[2]:.4g} "+unit+"<extra></extra>",
+            meta={LAYER:True,"presentation_only_trace":True})
     meta=_meta(fig.layout)
     meta[LAYOUT]={"polar":fig.layout.polar.to_plotly_json(),
                   "xvisible":fig.layout.xaxis.visible,"yvisible":fig.layout.yaxis.visible,
@@ -239,7 +241,7 @@ def apply(fig, arrangement=CALENDAR_ANGLE, *, mode="Tiles", interval=0., labels=
     m[ORIGINAL]={"visible":t.visible,"meta":t.meta}
     t.meta=m
     t.visible=False
-    if status["mode"]!="Contours":fig.add_trace(layer)
+    if layer is not None:fig.add_trace(layer)
     for contour in layers:fig.add_trace(contour)
     meta[STATUS]=status
     fig.update_layout(meta=meta,barmode="overlay",height=max(600,fig.layout.height or 0),
