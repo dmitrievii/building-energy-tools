@@ -134,7 +134,7 @@ def calculate(df,kind,x,y,*,fixed=None):
         keep=valid&(t.to_numpy()>=low);a,b,ops=t,h,("<=","<")
         invalid=np.broadcast_to(x[None,:]<low,(len(y),len(x)))
     elif kind=="surface":
-        import psychrolib
+        from .psychrometrics import psychrolib
         pv=numeric(df,VP).to_numpy(dtype=float)
         valid=np.isfinite(pv)&(pv>=0)
         if np.any((x<-80)|(x>80)) or np.any((y<=0)|(y>100)):
@@ -177,12 +177,15 @@ def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False):
           f"The common denominator is {denom:,.1f} valid observation hours within the active screening scope. ")
     if finite.size:note+=f"Across admissible pairs the result ranges from {finite.min():,.1f} to {finite.max():,.1f} h. "
     if np.isfinite(ref_hours):note+=f"The active reference ({ref[0]:g}, {ref[1]:g}) yields {ref_hours:,.1f} h ({100*ref_hours/denom:.1f}%). "
-    if kind.startswith("nv_"):note+="The other ventilation limits and occupancy schedule remain fixed. "
+    if kind.startswith("nv_"):
+        note+="The other ventilation limits and occupancy schedule remain fixed. "
+        if kind=="nv_wind_range" and (fixed or {}).get("wind_min_m_s") is None and (fixed or {}).get("wind_max_m_s") is None:
+            note+="The reference wind limits are the default candidate limits; the active ventilation screen has no wind-speed restriction. "
     if kind=="night":note+="Only night hours with a completely observed reference day enter the denominator. "
     if kind=="surface":note+="Surface relative humidity follows outdoor vapour pressure and the specified surface saturation pressure; RH at or above the threshold is counted. "
     if kind=="solar":note+="GHI interval energy is converted to mean intensity using the declared source cadence. "
     if kind=="economizer":note+="The fixed minimum outdoor temperature and strict enthalpy comparison are retained. "
-    if kind=="neutral":note+="The neutral interval includes both temperature boundaries. "
+    if kind=="neutral":note+="The neutral interval includes both temperature boundaries and describes the temperature-only band between heating and cooling thresholds. "
     note+="Grey cells indicate inadmissible threshold combinations. Hours quantify climatic opportunities or exposure under the stated screening assumptions."
     return f,note
 
