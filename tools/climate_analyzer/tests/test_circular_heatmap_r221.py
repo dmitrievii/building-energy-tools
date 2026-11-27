@@ -75,6 +75,18 @@ class CircularHeatmapTests(unittest.TestCase):
         self.assertEqual(len(f.data),1)
         self.assertIsNone(f.data[0].visible)
 
+    def test_report_clone_preserves_cells_palette_and_interpretation(self):
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        f=self.fixture()
+        apply_heatmap_presentation(f,geometry="Circular")
+        printed=report_figure(f,width_pt=480,height_pt=480)
+        self.assertEqual(len(printed.data),2)
+        self.assertEqual(printed.data[-1].type,"barpolar")
+        self.assertEqual(printed.data[-1].marker.coloraxis,"coloraxis")
+        self.assertEqual(printed.layout.coloraxis.cmin,-10)
+        np.testing.assert_array_equal(printed.data[-1].marker.color,f.data[-1].marker.color)
+        self.assertTrue(validate_figure_interpretation(printed,"One canonical interpretation."))
+
     def test_full_month_grid_has_exact_cell_count(self):
         f=go.Figure(go.Heatmap(x=list(range(1,13)),y=list(range(24)),z=np.arange(288).reshape(24,12)))
         f.update_layout(xaxis_title="Month",yaxis_title="Hour of day")
