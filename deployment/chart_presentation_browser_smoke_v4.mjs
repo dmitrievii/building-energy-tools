@@ -573,15 +573,21 @@ try {
     types:node._fullData.map(t=>t.type),
     reference:[node._fullLayout.meta?.reference_start,node._fullLayout.meta?.reference_end],
     counts:node._fullLayout.meta?.reference_sample_counts,
-    zero:node._fullData[0]?.zmid,
+    // Plotly drops zmid from resolved trace defaults when explicit zmin/zmax
+    // disable auto-ranging. Qualify the actual rendered zero-centred domain
+    // and neutral colour stop instead of an unused optional property.
     limits:[node._fullData[0]?.zmin,node._fullData[0]?.zmax],
+    neutralStop:node._fullData[0]?.colorscale?.find(s=>s[0]===0.5)?.[1],
     annualYears:node._fullLayout.meta?.annual_reference_years,
     envelope:node._fullData.some(t=>t.fill==='tonexty')
   })));
   if(anomalyPlots.some(m=>m.reference[0]!==1991||m.reference[1]!==2020||m.annualYears!==30||m.counts.some(n=>n!==30))
      ||anomalyPlots[0].types[0]!=='bar'||!anomalyPlots[1].envelope
-     ||anomalyPlots[2].types[0]!=='heatmap'||anomalyPlots[2].zero!==0
+     ||anomalyPlots[2].types[0]!=='heatmap'
+     ||!anomalyPlots[2].limits.every(Number.isFinite)
+     ||anomalyPlots[2].limits[0]>=0||anomalyPlots[2].limits[1]<=0
      ||Math.abs(anomalyPlots[2].limits[0]+anomalyPlots[2].limits[1])>1e-8
+     ||!['#f7f7f7','rgb(247,247,247)'].includes(String(anomalyPlots[2].neutralStop).toLowerCase().replace(/\s/g,''))
      ||anomalyPlots[3].types[0]!=='bar')
     throw new Error('Historical anomaly visual reference contract failed: '+JSON.stringify(anomalyPlots));
   report.metrics.climateAnomalies=anomalyPlots;
