@@ -55,13 +55,52 @@ section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button,
 section[data-testid="stSidebar"] .st-key-_r219_service_button button {
-    justify-content:flex-start; text-align:left; min-height:2rem;
+    display:flex!important; align-items:center!important;
+    justify-content:flex-start!important; text-align:left!important; min-height:2rem;
     padding:.3rem .55rem; border:0!important; box-shadow:none!important;
     color:inherit!important; border-radius:.35rem; background:transparent!important;
     font-weight:400;
 }
+/* Streamlit renders button labels in nested markdown containers. Align
+   the label itself, not only the outer flex row. */
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree button [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] .st-key-_r219_service_button button [data-testid="stMarkdownContainer"] {
+    flex:1 1 auto; min-width:0; text-align:left!important;
+}
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree button p,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button p {
+    text-align:left!important; margin:0;
+}
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button {
-    padding-left:1.55rem; font-size:.92rem;
+    padding-left:1.25rem; font-size:.92rem;
+}
+/* Use the same flat row language for native settings expanders while
+   retaining their mounted controls and native keyboard accessibility. */
+section[data-testid="stSidebar"] [data-testid="stExpander"] details {
+    border:0!important; box-shadow:none!important; border-radius:.35rem;
+    background:transparent!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+    min-height:2rem; padding:.3rem .55rem!important;
+    justify-content:flex-start!important; text-align:left!important;
+    border-radius:.35rem; background:transparent!important;
+    color:inherit!important; font-weight:400;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+    text-align:left!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+    background:color-mix(in srgb,currentColor 6%,transparent)!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary:focus-visible {
+    outline:2px solid currentColor!important; outline-offset:1px;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] details[open] > summary {
+    background:color-mix(in srgb,currentColor 9%,transparent)!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpanderDetails"] {
+    border-top:0!important;
 }
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button {
     font-weight:550;
