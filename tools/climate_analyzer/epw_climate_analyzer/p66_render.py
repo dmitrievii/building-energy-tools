@@ -111,6 +111,18 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")
         if a[0]=="wet":note+=" Positive precipitation intervals only."
+    elif k in ("threshold_sensitivity","shading_geometry_sensitivity"):
+        from .threshold_sensitivity import SPECS,figure,shading_geometry_figure
+        from .figure_interpretation_contract import bind_figure_interpretation
+        try:
+            if k=="threshold_sensitivity":
+                spec=SPECS[a[0]]
+                f,note=figure(df,a[0],np.linspace(*spec.x_range,21),np.linspace(*spec.y_range,21))
+            else:
+                f,note=shading_geometry_figure(df,np.linspace(0,2,11),np.linspace(0,2,11),geometry=cat.GEOMETRY)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
     elif k=="ridgeline":
         from .ridgeline import ridgeline_figure
         from .figure_interpretation_contract import bind_figure_interpretation
