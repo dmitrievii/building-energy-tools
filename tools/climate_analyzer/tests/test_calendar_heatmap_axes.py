@@ -799,7 +799,7 @@ class CalendarHeatmapTests(unittest.TestCase):
             np.testing.assert_allclose(occurrence_table(day,c,edges,basis="Days",daily_stat="Maximum").iloc[0],[1.,0.,0.,1.,0.,0.,0.,1.])
 
     def test_wind_direction_cyclic_absolute_compass_domain(self):
-        from epw_climate_analyzer.chart_theme import WIND_DIRECTION_COLUMNS,WIND_DIRECTION_COLORSCALE,WIND_DIRECTION_TICKS,WIND_DIRECTION_LABELS,ORIENTATION_COLORS,metric_colorscale
+        from epw_climate_analyzer.chart_theme import WIND_DIRECTION_COLUMNS,WIND_DIRECTION_COLORSCALE,WIND_DIRECTION_TICKS,WIND_DIRECTION_LABELS,WIND_DIRECTION_HEATMAP_COLORS,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart
         from epw_climate_analyzer.aggregations import heatmap_default_statistic
         idx=pd.date_range("2026-01-01",periods=72,freq="h")
@@ -821,7 +821,9 @@ class CalendarHeatmapTests(unittest.TestCase):
             df[col]=100.
             fig=temporal_heatmap_chart(df,col,"day",HEATMAP_COMPARE_HOUR,stat,"Wind direction","deg")
             self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,360.))
-        self.assertEqual(WIND_DIRECTION_COLORSCALE[4],[.5,ORIENTATION_COLORS["south"]])
+        self.assertEqual(WIND_DIRECTION_COLORSCALE[4],[.5,WIND_DIRECTION_HEATMAP_COLORS[4]])
+        self.assertEqual(len(set(WIND_DIRECTION_HEATMAP_COLORS[:-1])),8)
+        self.assertEqual(WIND_DIRECTION_HEATMAP_COLORS[0],WIND_DIRECTION_HEATMAP_COLORS[-1])
 
     def test_wind_speed_and_gust_green_absolute_domain(self):
         from epw_climate_analyzer.chart_theme import WIND_SPEED_COLUMNS,WIND_SPEED_COLORSCALE,wind_speed_colorscale,metric_colorscale
