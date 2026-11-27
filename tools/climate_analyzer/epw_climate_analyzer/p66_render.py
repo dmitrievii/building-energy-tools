@@ -110,6 +110,16 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")
         if a[0]=="wet":note+=" Positive precipitation intervals only."
+    elif k in ("cumulative_resource","cumulative_degree","cumulative_nv"):
+        from .cumulative_resources import extensive_profile,degree_profile,ventilation_profile
+        from .figure_interpretation_contract import bind_figure_interpretation
+        try:
+            if k=="cumulative_resource":f,note=extensive_profile(df,c)
+            elif k=="cumulative_degree":f,note=degree_profile(df)
+            else:f,note=ventilation_profile(df)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
     elif k=="climate_anomaly":
         from .climate_anomalies import figure
         from .figure_interpretation_contract import bind_figure_interpretation
