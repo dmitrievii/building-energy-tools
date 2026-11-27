@@ -205,10 +205,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=f" Reference guide pressure {p:,.0f} Pa; chart coordinates use existing source-derived psychrometrics."
     elif k=="persistence":
         threshold,above,style=a;step=p4.cadence(df)
-        ev=memo(("persistence",c,threshold,above),lambda:p4.events(s,threshold=threshold,above=above,minimum=3,step=step))
         quantity=f"{cat.LABELS.get(c,c)} [{u}]"
         s=p4.valid_values(df,c,True)
-        ev=p4.events(s,threshold=threshold,above=above,minimum=3,step=step)
+        ev=memo(("persistence",c,threshold,above),lambda:p4.events(s,threshold=threshold,above=above,minimum=3,step=step))
         f=_event_figure(ev,s,style,threshold,above,"hours",quantity,step=step)
         from .p4_ui import event_interpretation
         if d.chapter==cat.HUM:
