@@ -111,6 +111,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")
         if a[0]=="wet":note+=" Positive precipitation intervals only."
+    elif k=="ridgeline":
+        from .ridgeline import ridgeline_figure
+        from .figure_interpretation_contract import bind_figure_interpretation
+        try:f,note=ridgeline_figure(df,c,u,cat.LABELS[c],grouping=a[0],wet_only=a[1]=="wet")
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
     elif k=="diurnal":
         table=memo(("diurnal",c),lambda:ex.diurnal_statistics(df,c))
         f=ex.diurnal_figure(table,c,u,representation=a[0],centre=a[1],band=a[2])
