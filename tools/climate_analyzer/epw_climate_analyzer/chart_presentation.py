@@ -688,6 +688,9 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
                          heatmap_mode=local["mode"],contour_interval=local["interval"],
                          contour_labels=local["labels"],contour_width=local["width"],contour_contrast=local["contrast"])
         apply_chart_presentation(fig, settings)
+        from .circular_contours import STATUS as CIRCULAR_STATUS
+        status=(fig.layout.meta or {}).get(CIRCULAR_STATUS,{}) if isinstance(fig.layout.meta,dict) else {}
+        if status.get("reason"):st.caption("Circular tiles used: "+status["reason"])
         render_chart_editor(st,fig,edit_key)
         if any(t.type=="heatmap" for t in fig.data):
             meta=dict(fig.layout.meta) if isinstance(fig.layout.meta,dict) else {}
