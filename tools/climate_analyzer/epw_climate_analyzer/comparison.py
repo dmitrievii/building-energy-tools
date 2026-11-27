@@ -195,6 +195,43 @@ def comparison_interpretation(metrics: pd.DataFrame, reference: str | None = Non
     return " ".join(parts)
 
 
+def ranked_metric_interpretation(metrics: pd.DataFrame, metric: str, reference: str | None = None) -> str:
+    """Describe only the quantity plotted by the ranked metric chart."""
+    if metric not in metrics or "Climate" not in metrics:
+        return f"No valid values are available for {metric}."
+    data = metrics[["Climate", metric]].dropna().copy()
+    if data.empty:
+        return f"No valid values are available for {metric}."
+    data = data.sort_values(metric, ascending=True)
+    label, separator, unit = metric.rpartition(" [")
+    if not separator or not unit.endswith("]"):
+        label, unit = metric, ""
+    else:
+        unit = unit[:-1]
+    def value(number, signed=False):
+        formatted = f"{float(number):+,.3g}" if signed else f"{float(number):,.3g}"
+        return f"{formatted} {unit}".rstrip()
+    low, high = data.iloc[0], data.iloc[-1]
+    if float(low[metric]) == float(high[metric]):
+        result = f"{label}: all {len(data)} climates with valid data have the same value ({value(low[metric])})."
+    else:
+        result = (f"{label} ranges from {value(low[metric])} in {low['Climate']} "
+                  f"to {value(high[metric])} in {high['Climate']}.")
+    if reference is not None:
+        baseline = data[data["Climate"] == reference]
+        others = data[data["Climate"] != reference]
+        if not baseline.empty and not others.empty:
+            ref_value = float(baseline.iloc[0][metric])
+            differences = others[metric].astype(float) - ref_value
+            position = int(differences.abs().to_numpy().argmax())
+            delta = float(differences.iloc[position])
+            delta_unit = "K" if unit == "°C" else ("percentage points" if unit == "%" else unit)
+            formatted = f"{delta:+,.3g} {delta_unit}".rstrip()
+            result += (f" Relative to {reference} ({value(ref_value)}), the largest absolute difference "
+                       f"is for {others.iloc[position]['Climate']} ({formatted}).")
+    return result
+
+
 def ranked_metric_chart(metrics: pd.DataFrame, metric: str, title: str | None = None) -> go.Figure:
     """Create a horizontal ranked bar chart for one comparison metric."""
     data = metrics[["Climate", metric]].dropna().sort_values(metric, ascending=True)
