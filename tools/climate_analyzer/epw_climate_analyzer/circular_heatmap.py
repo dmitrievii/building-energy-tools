@@ -229,7 +229,7 @@ def apply(fig, arrangement=CALENDAR_ANGLE, *, mode="Tiles", interval=0., labels=
             colorbar=t.colorbar
         unit=str(colorbar.title.text or "")
         custom=[[labels[j],f"{h[i]:02d}:00–{h[i]+1:02d}:00",float(z[i,j])] for i,j in zip(rr,cc)]
-        layer=go.Barpolar(theta=angle,r=thick,base=base,width=widths,thetaunit="degrees",
+        layer=go.Barpolar(theta=angle,r=thick,base=base.astype(float).tolist(),width=widths,thetaunit="degrees",
             marker=marker,customdata=custom,showlegend=False,name="Calendar cells",
             hovertemplate="%{customdata[0]} · %{customdata[1]}<br>%{customdata[2]:.4g} "+unit+"<extra></extra>",
             meta={LAYER:True,"presentation_only_trace":True})
