@@ -198,5 +198,27 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("<br>", fig.layout.annotations[0].text)
 
 
+    def test_comparison_management_and_analysis_are_lazy_routes(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        route = source.split("def render_compare_climates(", 1)[1].split("def render_calculated_epw_statistics(", 1)[0]
+        self.assertIn('"Manage climates"', route)
+        self.assertIn('on_change="rerun"', route)
+        self.assertIn('key="comparison_active_tab"', route)
+        self.assertIn('if tabs[0].open:', route)
+        self.assertIn('with tabs[0]:\n            render_comparison_basket_manager(active_file)\n        return', route)
+        self.assertIn('if tab.open', route)
+        self.assertIn('with tabs[active_index]:', route)
+        self.assertLess(route.index('render_comparison_basket_manager(active_file)'), route.index('load_comparison_datasets('))
+        self.assertIn('default="Manage climates" if len(payloads) < 2 else "Summary"', route)
+
+    def test_comparison_shared_preferences_survive_hidden_management_controls(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        controls = source.split("def comparison_controls(", 1)[1].split("def get_reference_and_target(", 1)[0]
+        self.assertIn('state.get("_comparison_control_preferences", {})', controls)
+        self.assertIn('state["_comparison_control_preferences"] = {', controls)
+        self.assertIn('value=tuple(saved.get("hour_range", (0, 23)))', controls)
+        self.assertIn('if reference not in climate_names:', controls)
+
+
 if __name__ == "__main__":
     unittest.main()
