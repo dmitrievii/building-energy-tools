@@ -45,7 +45,7 @@ def _calendar_positions(raw, period, meta):
             n = 366  # canonical pooled coordinates use the leap-neutral year
             positions = [int(s)-1 for s in strings]
             stamps = [pd.Timestamp(2000,1,1)+pd.Timedelta(days=p) for p in positions]
-            labels = [s.strftime("%d.%m") for s in stamps]
+            labels = [s.strftime("%d.%m") + (f".{year}" if year is not None and not (s.month==2 and s.day==29 and not calendar.isleap(year)) else "") for s in stamps]
         else:
             if not all(re.fullmatch(r"\d{4}-\d{2}-\d{2}(?: 00:00:00)?", s) for s in strings):
                 return None
@@ -135,7 +135,7 @@ def restore(fig):
     fig.layout.yaxis.visible=old["yvisible"]
     fig.layout.height=old["height"]
     fig.layout.barmode=old["barmode"]
-    fig.update_layout(meta=meta)
+    fig.layout.meta=meta
     return fig
 
 
@@ -213,7 +213,7 @@ def apply(fig, arrangement=CALENDAR_ANGLE):
     t.visible=False
     fig.add_trace(layer)
     fig.update_layout(meta=meta,barmode="overlay",height=max(600,fig.layout.height or 0),
-        polar=dict(angularaxis=dict(direction="clockwise",rotation=90,tickmode="array",
+        polar=dict(barmode="overlay",angularaxis=dict(direction="clockwise",rotation=90,tickmode="array",
                                     tickvals=list(tickvals),ticktext=ticktext,showgrid=False),
                    radialaxis=dict(range=[0,1.],tickmode="array",tickvals=list(radialvals),
                                    ticktext=radialtext,angle=0,showgrid=False,
