@@ -156,8 +156,13 @@ def figure(target,reference,column,start,end,view,*,year=None,relative=False):
     if year not in years:raise ValueError("Selected target year is outside the filtered observation period.")
     months=[calendar.month_abbr[m] for m in range(1,13)]
     f=go.Figure()
+    negative,positive="#3979B7","#C94D40"
+    if column in ("liquid_precipitation_depth_mm","relative_humidity_pct","humidity_ratio_g_kg"):
+        negative,positive="#B7793B","#287AA8"
+    elif "irradiation" in q.label.lower() or column=="sunshine_duration_s":
+        negative,positive="#637D99","#C18A24"
     def bars(x,s):
-        f.add_bar(x=x,y=s,marker_color=["#C94D40" if v>0 else "#3979B7" if v<0 else "#999999" for v in s.fillna(0)],showlegend=False)
+        f.add_bar(x=x,y=s,marker_color=[positive if v>0 else negative if v<0 else "#999999" for v in s.fillna(0)],showlegend=False)
         f.add_hline(y=0,line_color="#666666",line_width=1)
     if view==VIEWS[0]:
         s=an.loc[year]
@@ -189,9 +194,9 @@ def figure(target,reference,column,start,end,view,*,year=None,relative=False):
         if not np.isfinite(z).any():raise ValueError("No comparable target months.")
         limit=max(1e-9,float(np.nanmax(np.abs(z))))
         f.add_heatmap(x=months,y=[str(v) for v in an.index],z=z,zmin=-limit,zmax=limit,zmid=0,
-                      colorscale=[[0,"#2865A8"],[.5,"#F7F7F7"],[1,"#C54736"]],
+                      colorscale=[[0,negative],[.5,"#F7F7F7"],[1,positive]],
                       colorbar=dict(title=f"Anomaly [{unit}]"),hoverongaps=False,
-                      meta={"heatmap_semantics":"categorical","heatmap_quantity":"interannual anomalies"})
+                      meta={"heatmap_semantics":"continuous","heatmap_quantity":"interannual anomalies"})
         f.update_layout(xaxis_title="Month",yaxis_title="Year",plot_bgcolor="#D1D5DB",
                         height=max(450,min(1100,24*len(an)+150)))
         note=f"The matrix contains {np.isfinite(z).sum()} comparable year–month departures across {len(an)} calendar years. Grey cells lack comparable complete observations or an admitted reference."
