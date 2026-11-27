@@ -78,6 +78,13 @@ class ThresholdSensitivityTests(unittest.TestCase):
                 self.assertEqual(hours[i,j],mask.sum()*.5)
                 self.assertEqual(nights[i,j],len(set(anchors[mask])))
 
+    def test_night_without_redundant_hour_column(self):
+        for kind in ("night","night_delta"):
+            a,da=calculate(self.df,kind,[26.],[20.])
+            b,db=calculate(self.df.drop(columns="hour_of_day"),kind,[26.],[20.])
+            np.testing.assert_array_equal(a,b)
+            self.assertEqual(da,db)
+
     def test_solar_and_economizer_match_single_threshold_masks(self):
         for kind,x,y in (("solar",[20.,24.,30.],[100.,250.,500.]),
                          ("economizer",[20.,24.,28.],[35.,50.,65.])):
