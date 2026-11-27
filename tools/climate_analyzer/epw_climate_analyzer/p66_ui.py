@@ -30,6 +30,15 @@ def render_atlas(df,context,reference_df=None):
     from .heatmap_presentation import context_from_state
     context={**context,"heatmap presentation":context_from_state(st.session_state)}
     st.caption("Heat maps: labelled contours for eligible continuous grids; discrete grids retain tiles.")
+    from .climate_anomalies import available as anomaly_available, MIN_REFERENCE_YEARS
+    if reference_df is not None and anomaly_available(reference_df):
+        years=sorted(set(reference_df.index.year))
+        if len(years)>=MIN_REFERENCE_YEARS and st.checkbox("Include historical climate anomalies",value=False,key="r221_atlas_anomaly_enabled"):
+            default=(1991,2020) if years[0]<=1991 and years[-1]>=2020 else (years[0],years[-1])
+            lo,hi=st.slider("Atlas anomaly reference years",int(years[0]),int(years[-1]),default,key="r221_atlas_anomaly_reference")
+            if hi-lo+1>=MIN_REFERENCE_YEARS:
+                context={**context,"anomaly reference years":[int(lo),int(hi)],"anomaly quantities":anomaly_available(reference_df)}
+            else:st.info("Select at least three reference years to include anomaly diagrams.")
     coverage=st.radio("Coverage",LEVELS,index=2,key="p66_coverage")
     try:
         prepared=prepare_frame(df)
