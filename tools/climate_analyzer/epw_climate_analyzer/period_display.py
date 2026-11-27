@@ -75,6 +75,72 @@ def format_plotted_time(value,df=None,*,aggregation="",title=""):
     return label
 
 
+
+def format_hour_interval(hour):
+    """Clock-hour bin uses a zero-based hour, not a point observation."""
+    try:
+        h = int(hour)
+        if float(hour) == h and 0 <= h <= 23:
+            return f"{h:02d}:00–{h+1:02d}:00"
+    except (ValueError, TypeError, OverflowError):
+        pass
+    return str(hour)
+
+
+def format_heatmap_cell(fig, trace, position, df=None):
+    """Format actual calendar coordinates, respecting pooled and interannual cells.
+
+    Numeric day slots use the leap-neutral calendar of the heatmap engine
+    (2000 as reference only); the reference year is never displayed as data.
+    Chronological coordinates retain the real displayed year.
+    """
+    import calendar
+
+    row, col = position
+    x, y = trace.x[col], trace.y[row]
+    def axis_title(coord):
+        ref = getattr(trace, coord + "axis", None) or coord
+        axis = getattr(fig.layout, coord + "axis" + ref[1:], None)
+        return str(axis.title.text or "").strip().lower() if axis is not None else ""
+    period, comparison = axis_title("x"), axis_title("y")
+    is_hour = comparison in ("hour", "hour of day", "clock hour", "analysis clock hour")
+    is_year = comparison == "year"
+    year = int(y) if is_year else source_year(df)
+    label = str(x)
+    try:
+        if period in ("day", "daily"):
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", label) or isinstance(x, (date, datetime, np.datetime64)):
+                label = pd.Timestamp(x).strftime("%d.%m.%Y")
+            elif re.fullmatch(r"\d{1,3}", label) and 1 <= int(label) <= 366:
+                stamp = pd.Timestamp(2000, 1, 1) + pd.Timedelta(days=int(label)-1)
+                label = stamp.strftime("%d.%m")
+                if year is not None:
+                    # An interannual empty leap-day cell is not a valid date.
+                    date(year, stamp.month, stamp.day)
+                    label += f".{year:04d}"
+        elif period in ("week", "weekly"):
+            match = re.fullmatch(r"(?:(\d{4})-)?W?(\d{1,2})", label, re.I)
+            if match and 1 <= int(match.group(2)) <= 53:
+                # A pooled ISO-week slot need not belong to the calendar year
+                # at the edges of a single-year dataset.
+                week_year = match.group(1) or (str(year) if is_year else None)
+                label = f"Week {int(match.group(2)):02d}" + (f", {week_year}" if week_year else "")
+        elif period in ("month", "monthly"):
+            match = re.fullmatch(r"(?:(\d{4})-)?(\d{1,2})", label)
+            if match and 1 <= int(match.group(2)) <= 12:
+                month_year = match.group(1) or year
+                label = calendar.month_name[int(match.group(2))] + (f" {month_year}" if month_year else "")
+        else:
+            return f"{period or 'x'}: {x}; {comparison or 'y'}: {y}"
+    except (ValueError, TypeError, OverflowError):
+        return f"{period or 'x'}: {x}; {comparison or 'y'}: {y}"
+    if is_hour:
+        return f"{label}, {format_hour_interval(y)}"
+    if is_year:
+        return label
+    return f"{label}; {comparison or 'y'}: {y}"
+
+
 def canonical_profile_kind(kind, title="", args=()):
     """Classify identical plotted profile statistics equally in UI, Atlas and report.
 
