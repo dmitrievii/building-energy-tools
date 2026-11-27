@@ -72,7 +72,7 @@ def _color_contract(t, fig, values):
     hi = scale.cmax if t.coloraxis else t.zmax
     lo = float(values.min()) if lo is None else float(lo)
     hi = float(values.max()) if hi is None else float(hi)
-    palette = scale.colorscale or "Viridis"
+    palette = [list(stop) for stop in scale.colorscale] if scale.colorscale else "Viridis"
     reverse = bool(scale.reversescale)
     def color(value):
         u = float(np.clip((value-lo)/max(hi-lo,1e-30),0.,1.))
