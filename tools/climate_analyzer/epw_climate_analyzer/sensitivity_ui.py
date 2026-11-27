@@ -29,12 +29,16 @@ def panel(df,render,kinds,*,key,fixed=None,references=None):
         ymin=b.number_input(spec.y_label+" · from",value=float(yr[0]),key=key+"_"+kind+"_ymin")
         ymax=b.number_input(spec.y_label+" · to",value=float(yr[1]),key=key+"_"+kind+"_ymax")
         n=st.select_slider("Grid resolution per axis",options=[11,21,31,41,61],value=31,key=key+"_resolution")
-    percent=st.radio("Result unit",["Hours [h]","Share of valid hours [%]"],horizontal=True,key=key+"_unit").startswith("Share")
+    basis="hours"
+    if kind.startswith("night"):
+        basis=st.radio("Count basis",["Eligible hours","Nights with eligible intervals"],horizontal=True,key=key+"_basis").startswith("Nights") and "nights" or "hours"
+    unit_options=["Hours [h]","Share of valid hours [%]"] if basis=="hours" else ["Nights","Share of observed nights [%]"]
+    percent=st.radio("Result unit",unit_options,horizontal=True,key=key+"_unit_"+basis).startswith("Share")
     if xmin>=xmax or ymin>=ymax:
         st.warning("Each parameter range must have a positive width.")
         return
     x=np.linspace(xmin,xmax,n);y=np.linspace(ymin,ymax,n)
-    try:render(*figure(df,kind,x,y,fixed=p,reference=ref,percentage=percent))
+    try:render(*figure(df,kind,x,y,fixed=p,reference=ref,percentage=percent,basis=basis))
     except (ValueError,KeyError) as exc:st.info(str(exc))
 
 
