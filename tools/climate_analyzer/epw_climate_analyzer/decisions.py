@@ -64,21 +64,8 @@ def natural_ventilation_condition(
     return condition.fillna(False)
 
 
-def night_flushing_condition(
-    df: pd.DataFrame,
-    day_hot_threshold_c: float = 26.0,
-    night_max_c: float = 20.0,
-    night_start_hour: int = 22,
-    night_end_hour: int = 6,
-) -> pd.Series:
-    """Return a Boolean mask for potential night-flushing hours.
-
-    For the usual cross-midnight interval (for example 22...6), late-evening
-    hours are evaluated against the maximum temperature of the same calendar
-    day, while early-morning hours are evaluated against the preceding calendar
-    day. This prevents 00...06 from using temperatures that occur later in the
-    future day.
-    """
+def night_flushing_reference(df, night_start_hour=22, night_end_hour=6):
+    """Return night-clock mask and complete reference-day maximum, shared by screens."""
     start = int(max(0, min(23, night_start_hour)))
     end = int(max(0, min(23, night_end_hour)))
     hour = df["hour_of_day"]
@@ -89,7 +76,6 @@ def night_flushing_condition(
     else:
         is_night = hour.between(start, end)
 
-    cool_enough = df["dry_bulb_temperature_c"] <= night_max_c
     # A preceding hot day must be completely observed. A partial day with
     # one hot reading must not qualify the following night.
     observed_t = pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce")
@@ -126,8 +112,20 @@ def night_flushing_condition(
         else:
             hot_day_reference = current_day_max
 
-    follows_hot_day = hot_day_reference >= day_hot_threshold_c
-    return (is_night & cool_enough & follows_hot_day).fillna(False)
+    return is_night, hot_day_reference
+
+
+def night_flushing_condition(
+    df: pd.DataFrame,
+    day_hot_threshold_c: float = 26.0,
+    night_max_c: float = 20.0,
+    night_start_hour: int = 22,
+    night_end_hour: int = 6,
+) -> pd.Series:
+    """Screen cool night hours against the same complete reference day."""
+    is_night, hot_day_reference = night_flushing_reference(df, night_start_hour, night_end_hour)
+    return (is_night & df["dry_bulb_temperature_c"].le(night_max_c)
+            & hot_day_reference.ge(day_hot_threshold_c)).fillna(False)
 
 
 def economizer_condition(
