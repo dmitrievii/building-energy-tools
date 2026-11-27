@@ -114,7 +114,7 @@ def _eligible(fig,trace,*,check_grid=True):
     if np.all((finite==0)|(finite==1)):return None
     # Contouring requires at least one full valid 2×2 cell, and ordered axes.
     valid=np.isfinite(z)
-    if not (valid[:-1,:-1]&valid[1:,:-1]&valid[:-1,1:]&valid[1:,1:]).any():return None
+    if check_grid and not (valid[:-1,:-1]&valid[1:,:-1]&valid[:-1,1:]&valid[1:,1:]).any():return None
     if check_grid and not _ordered_grid(trace.x,z.shape[1],_axis(fig,trace,"x")):return None
     if check_grid and not _ordered_grid(trace.y,z.shape[0],_axis(fig,trace,"y")):return None
     # This version leaves mixed categorical masks and annotated matrices as
