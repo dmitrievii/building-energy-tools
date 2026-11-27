@@ -2205,6 +2205,19 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
     if chart_type not in compatible_types(df,column):
         st.info("The selected representation requires supported subdaily observations.")
         return
+    if chart_type=="Ridgeline plot":
+        from epw_climate_analyzer.ridgeline import ridgeline_figure
+        from epw_climate_analyzer.p66_catalogue import LABELS
+        grouping=st.selectbox("Distribution grouping",["Monthly","Seasonal"],key=key_prefix+"_ridge_grouping")
+        bins=st.slider("Common distribution bins",10,100,40,5,key=key_prefix+"_ridge_bins")
+        quantiles=st.checkbox("Show median and P05–P95",value=True,key=key_prefix+"_ridge_quantiles")
+        wet_only=(st.radio("Distribution basis",["Wet intervals only","All intervals including dry periods"],horizontal=True,key=key_prefix+"_ridge_wet")=="Wet intervals only" if column=="liquid_precipitation_depth_mm" else False)
+        try:
+            fig,note=ridgeline_figure(df,column,unit,LABELS.get(column,column.replace("_"," ")),grouping=grouping,bins=bins,quantiles=quantiles,wet_only=wet_only)
+        except ValueError as exc:
+            st.info(str(exc));return
+        render_plot(fig,note)
+        return
     if chart_type=="Typical daily profile":
         represented=sorted(set(pd.DatetimeIndex(df.index).month))
         months=st.multiselect("Profile months", [m for m,n in MONTHS.items() if n in represented],
@@ -2355,7 +2368,7 @@ def render_generic_variable_page(
             column=column,args=(aggregation,))
         render_plot(fig,note)
         return
-    if chart_type in ("Typical daily profile","Monthly occurrence classes"):
+    if chart_type in ("Typical daily profile","Monthly occurrence classes","Ridgeline plot"):
         render_extended_variable_chart(df,column,unit,chart_type,key_prefix=scope)
         return
     chart_df = df
@@ -6173,7 +6186,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         column = next(column for label, column, _ in specs if label == selected)
         from epw_climate_analyzer.extended_visualization import compatible_types, probability_figure
         chart_type = st.selectbox("Chart type", ["Profile", "Duration curve", "Month-hour heat map", "Histogram"]+compatible_types(solar,column), key="historical_solar_chart")
-        if chart_type in ("Typical daily profile","Monthly occurrence classes"):
+        if chart_type in ("Typical daily profile","Monthly occurrence classes","Ridgeline plot"):
             render_extended_variable_chart(solar,column,"W/m²",chart_type,key_prefix="historical_irradiance")
             return
         if chart_type == "Profile":
