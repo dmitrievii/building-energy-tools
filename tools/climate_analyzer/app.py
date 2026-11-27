@@ -3498,6 +3498,13 @@ def _render_temperature_degree_days(df):
         index=2,
         key="degree_metric_aggregation",
     )
+    if metric=="Degree-hours":
+        representation=st.radio("Representation",["Period totals","Cumulative annual profile"],horizontal=True,key="r221_degree_representation")
+        if representation=="Cumulative annual profile":
+            from epw_climate_analyzer.cumulative_resources import degree_profile
+            try:render_plot(*degree_profile(df,heating_indoor_c=heating_indoor,heating_limit_c=heating_limit,cooling_indoor_c=cooling_indoor,cooling_limit_c=cooling_limit))
+            except ValueError as exc:st.info(str(exc))
+            return
     table = degree_metric_table(
         df,
         heating_indoor_c=heating_indoor,
@@ -5222,6 +5229,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
             "Reference eligibility",
             "Heat map",
             "Suitable hours by aggregation",
+            "Cumulative suitable hours",
             "Daily suitable-hours duration curve",
             "Rejected reasons",
             "Psychrometric NV overlay",
@@ -5352,6 +5360,12 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
         render_plot(fig, natural_ventilation_interpretation(
             df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
         ))
+    elif chart_group == "Cumulative suitable hours":
+        from epw_climate_analyzer.cumulative_resources import ventilation_profile
+        fixed=dict(t_min_c=t_min,t_max_c=t_max,d_max_g_kg=d_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max,
+                   occupied_only=occupied_only,occupied_start_hour=occupied_start,occupied_end_hour=occupied_end,weekdays_only=weekdays_only)
+        try:render_plot(*ventilation_profile(df,fixed=fixed))
+        except ValueError as exc:st.info(str(exc))
     elif chart_group == "Suitable hours by aggregation":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         counts = threshold_count_by_period(df, mask, aggregation, label="suitable_hours")
