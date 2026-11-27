@@ -481,6 +481,48 @@ try {
   report.checks.sidebarGeometry=true;
   await page.screenshot({path:OUT_DIR+'/13-sidebar-expanded.png',fullPage:true});
 
+  // Exercise the real per-chart geometry controls against all 8,760
+  // calendar positions, one of which is deliberately missing.
+  await page.goto(TARGET_URL+'?circular=1',{waitUntil:'domcontentloaded'});
+  const circularFrame=await appFrame(page,'Circular calendar geometry harness');
+  await circularFrame.getByText('Circular',{exact:true}).click();
+  async function circularMetrics(arrangement) {
+    await circularFrame.waitForFunction(({arrangement})=>{
+      const node=document.querySelector('.js-plotly-plot');
+      const t=node?._fullData?.find(t=>t.type==='barpolar'&&t.meta?.ige_circular_heatmap_layer);
+      if(!t||t.r?.length!==8759)return false;
+      const expected=arrangement==='Calendar angle'?180/365:7.5;
+      return Math.abs(Number(t.theta[0])-expected)<1e-6&&node.querySelectorAll('.polarlayer path').length>=8759;
+    },{arrangement},{timeout:90000});
+    return circularFrame.locator('.js-plotly-plot').first().evaluate(node=>{
+      const t=node._fullData.find(t=>t.type==='barpolar');
+      return {cells:t.r.length,firstAngle:Number(t.theta[0]),firstWidth:Number(t.width[0]),
+        paths:node.querySelectorAll('.polarlayer path').length,
+        canonicalHidden:node._fullData.find(t=>t.type==='heatmap')?.visible===false,
+        domain:[node._fullLayout.coloraxis.cmin,node._fullLayout.coloraxis.cmax],
+        northRotation:node._fullLayout.polar.angularaxis.rotation,
+        axisDirection:node._fullLayout.polar.angularaxis.direction};
+    });
+  }
+  const calendarAngle=await circularMetrics('Calendar angle');
+  assertNear(calendarAngle.firstWidth,360/365,1e-6,'Calendar annulus day width');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/14-circular-calendar-angle.png'});
+  await circularFrame.getByText('Clock-hour angle',{exact:true}).click();
+  const clockAngle=await circularMetrics('Clock-hour angle');
+  assertNear(clockAngle.firstWidth,15,1e-6,'Clock-hour annulus sector width');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/15-circular-clock-angle.png'});
+  for(const m of [calendarAngle,clockAngle]){
+    if(!m.canonicalHidden||m.domain[0]!==0||m.domain[1]!==8759||m.axisDirection!=='clockwise')
+      throw new Error('Circular canonical colour/geometry contract failed: '+JSON.stringify(m));
+  }
+  await circularFrame.getByText('Cartesian',{exact:true}).click();
+  await circularFrame.waitForFunction(()=>{
+    const d=document.querySelector('.js-plotly-plot')?._fullData;
+    return d?.some(t=>t.type==='heatmap'&&t.visible!==false)&&!d?.some(t=>t.type==='barpolar');
+  },null,{timeout:60000});
+  report.metrics.circularCalendar={calendarAngle,clockAngle};
+  report.checks.circularCalendar=true;
+
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));
