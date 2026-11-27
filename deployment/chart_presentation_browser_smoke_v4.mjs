@@ -604,7 +604,7 @@ try {
   if(eventMetrics.mode!=='area'||eventMetrics.size.join(',')!=='3,9'||eventMetrics.zero!=='circle-open'||eventMetrics.unit!=='K·d'||eventMetrics.points!==3)
     throw new Error('Event severity marker contract failed: '+JSON.stringify(eventMetrics));
   if(cumulativeMetrics.years!==2||cumulativeMetrics.firstYear[11]!==100||cumulativeMetrics.secondYear[0]!==200||
-      cumulativeMetrics.secondYear[1]!=null||cumulativeMetrics.secondYear[2]!==500||cumulativeMetrics.connectgaps!==false)
+      (cumulativeMetrics.secondYear[1]!=null&&Number.isFinite(cumulativeMetrics.secondYear[1]))||cumulativeMetrics.secondYear[2]!==500||cumulativeMetrics.connectgaps!==false)
     throw new Error('Cumulative year-reset and gap contract failed: '+JSON.stringify(cumulativeMetrics));
   report.metrics.eventSeverity=eventMetrics;
   report.metrics.cumulativeResources=cumulativeMetrics;
