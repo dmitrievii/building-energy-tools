@@ -254,6 +254,14 @@ def catalogue(df,context,coverage=FULL):
     add(OTC,"Mean radiant temperature · sun and shade","utci_pair_mrt",ok=pair_ok)
     for axis in ("Temperature–wind","Temperature–radiant offset","Wind–radiant offset"):
         add(OTC,"Controlled UTCI sensitivity · "+axis,"utci_sensitivity",args=(axis,),ok=hourly and has(T,RH,V))
+    # Shared sensitivity configurations are source gated; one reference
+    # grid per kind rather than enumerating every possible threshold pair.
+    from .threshold_sensitivity import SPECS as SENSITIVITY_SPECS
+    for kind,spec in SENSITIVITY_SPECS.items():
+        chapter=NV if kind.startswith("nv_") or kind=="night" else SHADE if kind=="solar" else HUM if kind=="surface" else HVAC
+        source_ok=hourly and all(c in df and base.numeric(df,c).notna().any() for c in spec.fields)
+        add(chapter,spec.title,"threshold_sensitivity",args=(kind,),ok=source_ok)
+    add(SHADE,"Shading geometry · overhang and symmetric fins","shading_geometry_sensitivity",ok=solar_ok)
     years=sorted(set(df.index.year))
     for year in (years[-1:] if coverage==REP else years):
         add(RAIN,f"Snow-cover calendar · {year}","snow_calendar",S,"",(int(year),),ok=hourly and has(S))
