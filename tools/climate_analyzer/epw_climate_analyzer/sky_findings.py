@@ -285,9 +285,9 @@ def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=
                 z=np.asarray(tr.z,dtype=float)
                 if z.ndim==2 and np.isfinite(z).any():
                     a=np.unravel_index(np.nanargmax(z),z.shape)
-                    x=list(tr.x);y=list(tr.y)
+                    from .period_display import format_heatmap_cell
                     return (f"Highest displayed {LABELS.get(column,column)} cell: "
-                            f"{_fmt(z[a])} {unit} at x={x[a[1]]}, y={y[a[0]]}. "+context)
+                            f"{_fmt(z[a])} {unit} ({format_heatmap_cell(fig, tr, a, df)}). "+context)
     if kind in ("duration","duration curve"):
         return (f"Ranked {LABELS.get(column,column)}: P05 {_fmt(v.quantile(.05))}, "
                 f"median {_fmt(v.median())}, P95 {_fmt(v.quantile(.95))} {unit}. "
