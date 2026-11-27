@@ -224,5 +224,38 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn('if reference not in climate_names:', controls)
 
 
+    def test_quarter_pixel_heatmap_contour_defaults_and_rendering(self) -> None:
+        import plotly.graph_objects as go
+        from epw_climate_analyzer.heatmap_controls import DEFAULT, get_preferences, STORE
+        from epw_climate_analyzer.heatmap_presentation import (
+            CONTOURS, HYBRID, CONTOUR_MIN_WIDTH, apply_heatmap_presentation,
+            context_from_state,
+        )
+        from epw_climate_analyzer.chart_presentation import ChartPresentationSettings, EXTRA_DEFAULTS
+
+        self.assertEqual(CONTOUR_MIN_WIDTH, 0.25)
+        self.assertEqual(DEFAULT["width"], 0.25)
+        self.assertEqual(context_from_state({})["width"], 0.25)
+        self.assertEqual(ChartPresentationSettings().contour_width, 0.25)
+        self.assertEqual(EXTRA_DEFAULTS["contour_width"], 0.25)
+        self.assertEqual(get_preferences({STORE: {"existing": {"width": 1.5}}}, "existing")["width"], 1.5)
+        for mode in (CONTOURS, HYBRID):
+            fig = go.Figure(go.Heatmap(
+                x=[0, 1, 2], y=[1, 2, 3], z=[[0, 5, 10], [5, 10, 15], [10, 15, 20]],
+                colorbar={"title": "°C"},
+            ))
+            apply_heatmap_presentation(fig, mode)
+            self.assertEqual(len(fig.data), 2)
+            self.assertEqual(fig.data[-1].type, "contour")
+            self.assertEqual(fig.data[-1].line.width, 0.25)
+            apply_heatmap_presentation(fig, mode, width=0.1)
+            self.assertEqual(fig.data[-1].line.width, 0.25)
+            apply_heatmap_presentation(fig, mode, width=0.75)
+            self.assertEqual(fig.data[-1].line.width, 0.75)
+        controls = (TOOL_ROOT / "epw_climate_analyzer" / "heatmap_controls.py").read_text(encoding="utf-8")
+        self.assertIn('min_value=CONTOUR_MIN_WIDTH', controls)
+        self.assertIn('max_value=CONTOUR_MAX_WIDTH, step=.25', controls)
+
+
 if __name__ == "__main__":
     unittest.main()
