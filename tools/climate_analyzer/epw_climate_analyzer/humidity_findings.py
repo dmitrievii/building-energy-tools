@@ -289,9 +289,8 @@ def humidity_figure_interpretation(
             return "No finite heatmap cells are displayed."
         lo = np.unravel_index(np.nanargmin(z), z.shape)
         hi = np.unravel_index(np.nanargmax(z), z.shape)
-        x, y = list(tr.x), list(tr.y)
-        location = lambda p: (f"x={x[p[1]] if p[1] < len(x) else '?'}; "
-                              f"y={y[p[0]] if p[0] < len(y) else '?'}")
+        from .period_display import format_heatmap_cell
+        location = lambda p: format_heatmap_cell(fig, tr, p, df)
         return (
             f"Selected {name} cell statistic ranges from {_fmt(z[lo])} {unit} "
             f"({location(lo)}) to {_fmt(z[hi])} {unit} ({location(hi)}). "
