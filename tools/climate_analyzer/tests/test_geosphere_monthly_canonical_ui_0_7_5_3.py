@@ -113,6 +113,7 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
             "Wind and Ventilation",
             "Precipitation and Snow",
             "Time Series and Overlay",
+            "Climate Anomalies",
             "Report",
             "Data Quality",
         }
@@ -123,6 +124,7 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
         self.assertIn("Sky and Daylight", pages)
         self.assertIn("Precipitation and Snow", pages)
         self.assertIn("Time Series and Overlay", pages)
+        self.assertIn("Climate Anomalies", pages)
         self.assertIn("Data Quality", pages)
         self.assertIn("Frosttage", groups["Temperature"])
         self.assertIn("Tage mit Sichtklasse 1", groups["Sky and Daylight"])
