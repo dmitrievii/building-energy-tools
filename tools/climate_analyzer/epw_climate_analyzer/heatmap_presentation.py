@@ -152,7 +152,12 @@ def _restore(fig):
             t.showscale=old.get("showscale")
             t.meta=old.get("meta")
 
-def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=CONTOUR_DEFAULT_WIDTH,contrast="Auto"):
+def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=CONTOUR_DEFAULT_WIDTH,contrast="Auto",geometry="Cartesian",arrangement="Calendar angle"):
+    from . import circular_heatmap as circular
+    circular.restore(fig)
+    if geometry==circular.CIRCULAR:
+        _restore(fig)
+        return circular.apply(fig,arrangement)
     if mode not in MODES:mode=TILES
     # Avoid any data scan/allocation in the default path on ordinary figures.
     if not any(_meta(t).get(LAYER) or _meta(t).get(ORIGINAL) for t in fig.data) and mode==TILES:return fig
