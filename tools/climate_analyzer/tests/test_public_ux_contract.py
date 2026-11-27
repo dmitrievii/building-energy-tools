@@ -177,5 +177,26 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("No valid values", ranked_metric_interpretation(frame.assign(**{metric: float("nan")}), metric))
 
 
+    def test_comparison_wind_rose_title_band_and_compass(self) -> None:
+        from types import SimpleNamespace
+        import pandas as pd
+        from epw_climate_analyzer.comparison import wind_rose_small_multiples
+
+        data = pd.DataFrame({"wind_direction_deg": [0., 90., 180., 270.],
+                             "wind_speed_m_s": [1., 3., 5., 7.]})
+        climates = [SimpleNamespace(display_name=name, data=data) for name in
+                    ("AUT_ST_Graz.AP.112400_TMYx.2004-2018.epw", "Dubai.Intl.AP — ARE", "Third climate")]
+        fig = wind_rose_small_multiples(climates)
+        self.assertEqual(len(fig.layout.annotations), 3)
+        for i, annotation in enumerate(fig.layout.annotations):
+            polar = fig.get_subplot(i // 2 + 1, i % 2 + 1)
+            self.assertGreater(annotation.y, polar.domain.y[1])
+            self.assertEqual(annotation.yanchor, "top")
+            self.assertEqual(polar.angularaxis.rotation, 90)
+            self.assertEqual(polar.angularaxis.direction, "clockwise")
+            self.assertEqual(polar.angularaxis.ticktext[0], "N")
+        self.assertIn("<br>", fig.layout.annotations[0].text)
+
+
 if __name__ == "__main__":
     unittest.main()
