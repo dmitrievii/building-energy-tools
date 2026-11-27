@@ -588,6 +588,28 @@ try {
   report.checks.climateAnomalies=true;
   await page.screenshot({path:OUT_DIR+'/20-climate-anomalies.png',fullPage:true});
 
+  await page.goto(TARGET_URL+'?severity=1',{waitUntil:'domcontentloaded'});
+  const severityFrame=await waitForCharts(page,2);
+  const eventMetrics=await severityFrame.locator('.js-plotly-plot').first().evaluate(node=>{
+    const d=node._fullData;
+    return {size:Array.from(d[0].marker.size),mode:d[0].marker.sizemode,
+      zero:d[1].marker.symbol,unit:node._fullLayout.meta?.severity_unit,
+      points:node.querySelectorAll('.scatterlayer .point').length};
+  });
+  const cumulativeMetrics=await severityFrame.locator('.js-plotly-plot').nth(1).evaluate(node=>{
+    const d=node._fullData;
+    return {years:d.length,firstYear:Array.from(d[0].y),secondYear:Array.from(d[1].y),
+      connectgaps:d[1].connectgaps,kind:node._fullLayout.meta?.layout_kind};
+  });
+  if(eventMetrics.mode!=='area'||eventMetrics.size.join(',')!=='3,9'||eventMetrics.zero!=='circle-open'||eventMetrics.unit!=='K·d'||eventMetrics.points!==3)
+    throw new Error('Event severity marker contract failed: '+JSON.stringify(eventMetrics));
+  if(cumulativeMetrics.years!==2||cumulativeMetrics.firstYear[11]!==100||cumulativeMetrics.secondYear[0]!==200||
+      cumulativeMetrics.secondYear[1]!=null||cumulativeMetrics.secondYear[2]!==500||cumulativeMetrics.connectgaps!==false)
+    throw new Error('Cumulative year-reset and gap contract failed: '+JSON.stringify(cumulativeMetrics));
+  report.metrics.eventSeverity=eventMetrics;
+  report.metrics.cumulativeResources=cumulativeMetrics;
+  report.checks.eventCumulative=true;
+  await page.screenshot({path:OUT_DIR+'/21-event-cumulative.png',fullPage:true});
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));
