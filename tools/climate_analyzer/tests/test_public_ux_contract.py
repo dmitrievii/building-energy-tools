@@ -92,5 +92,24 @@ class PublicUxContractTests(unittest.TestCase):
         )
 
 
+    def test_sidebar_navigation_and_settings_share_flat_left_alignment(self) -> None:
+        from epw_climate_analyzer.sidebar_layout import NAV_CSS
+
+        self.assertIn("justify-content:flex-start!important", NAV_CSS)
+        self.assertIn("text-align:left!important", NAV_CSS)
+        self.assertIn('button [data-testid="stMarkdownContainer"]', NAV_CSS)
+        self.assertIn('[data-testid="stExpander"] summary', NAV_CSS)
+        self.assertIn('[data-testid="stExpander"] details', NAV_CSS)
+        self.assertIn("border:0!important", NAV_CSS)
+        self.assertIn("summary:focus-visible", NAV_CSS)
+
+    def test_epw_filename_is_provenance_not_sidebar_copy(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        self.assertNotIn("climate_area.caption(epw.name)", source)
+        self.assertNotIn('st.write(f"Selected file: `{local_file.name}`")', source)
+        self.assertIn('st.caption(f"Source file: {epw.name}")', source)
+        self.assertIn("source=epw.name", source)
+
+
 if __name__ == "__main__":
     unittest.main()
