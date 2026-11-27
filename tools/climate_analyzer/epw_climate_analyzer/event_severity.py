@@ -29,7 +29,7 @@ def bubble_figure(table,*,unit,threshold,above,quantity):
         if not keep.any():continue
         d=table.loc[keep]
         datefmt="%d.%m.%Y" if unit=="days" else "%d.%m.%Y at %H:%M"
-        custom=np.column_stack([d.start.dt.strftime(datefmt),d.end.dt.strftime(datefmt),d.excess,d["mean"]])
+        custom=[[a,b,float(e),float(m)] for a,b,e,m in zip(d.start.dt.strftime(datefmt),d.end.dt.strftime(datefmt),d.excess,d["mean"])]
         marker=dict(color=event_color(quantity,above),opacity=.65,line=dict(width=1,color=event_color(quantity,above)))
         if zero:marker.update(size=7,symbol="circle-open",opacity=1.)
         else:marker.update(size=d.excess.to_numpy(dtype=float),sizemode="area",sizeref=2*peak/34**2,sizemin=0)
