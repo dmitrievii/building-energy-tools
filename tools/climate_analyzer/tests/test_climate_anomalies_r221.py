@@ -24,7 +24,13 @@ class ClimateAnomalyTests(unittest.TestCase):
         np.testing.assert_allclose(a["reference"]["mean"],np.arange(1,13)+4.)
         np.testing.assert_allclose(a["anomalies"].loc[2021],8.)
         self.assertEqual(a["annual_n"],5)
-        self.assertAlmostEqual(a["annual_anomalies"].loc[2021],8.)
+        # Independently weight native monthly means by each real year's days;
+        # leap-year February changes the annual reference slightly.
+        import calendar
+        def expected_annual(year):
+            days=np.array([calendar.monthrange(year,m)[1] for m in range(1,13)])
+            return np.average(np.arange(1,13)+(year-2015)*2.,weights=days)
+        self.assertAlmostEqual(a["annual_anomalies"].loc[2021],expected_annual(2021)-np.mean([expected_annual(y) for y in range(2015,2020)]))
         self.assertEqual(a["reference"]["n"].tolist(),[5]*12)
         np.testing.assert_allclose(a["reference"].p05,np.arange(1,13)+.4)
         np.testing.assert_allclose(a["reference"].p95,np.arange(1,13)+7.6)
@@ -73,6 +79,12 @@ class ClimateAnomalyTests(unittest.TestCase):
         f,_,_=figure(full,full,T,2015,2019,VIEWS[2])
         self.assertEqual(f.data[0].zmin,-f.data[0].zmax)
         self.assertEqual(f.data[0].zmid,0)
+
+    def test_cross_source_or_modified_target_is_rejected(self):
+        full=self.monthly()
+        target=full.loc["2021"].copy()
+        target[T]+=1.
+        with self.assertRaises(ValueError):analyze(target,full,T,2015,2019)
 
     def test_typical_year_and_generated_are_not_admitted(self):
         df=self.monthly()
