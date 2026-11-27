@@ -29,6 +29,30 @@ def atlas_live(d,df,context):
              "total","eligibility_map","eligibility_total","temp_threshold","passive","nv_special") or k.startswith("utci_"):
         from r28_live_route_capture import capture_atlas
         return capture_atlas(d,df,context)
+    # Independently reproduce the new website controls at the Atlas reference settings.
+    if k=="ridgeline":
+        from epw_climate_analyzer.ridgeline import ridgeline_figure
+        return ridgeline_figure(df,c,d.unit,cat.LABELS[c],grouping=a[0],bins=40,quantiles=True,wet_only=a[1]=="wet")
+    if k=="threshold_sensitivity":
+        from epw_climate_analyzer.threshold_sensitivity import SPECS,figure
+        spec=SPECS[a[0]]
+        return figure(df,a[0],np.linspace(*spec.x_range,21),np.linspace(*spec.y_range,21),percentage=False)
+    if k=="shading_geometry_sensitivity":
+        from epw_climate_analyzer.threshold_sensitivity import shading_geometry_figure
+        return shading_geometry_figure(df,np.linspace(0,2,11),np.linspace(0,2,11),geometry=cat.GEOMETRY)
+    if k=="cumulative_resource":
+        from epw_climate_analyzer.cumulative_resources import extensive_profile
+        return extensive_profile(df,c)
+    if k=="cumulative_degree":
+        from epw_climate_analyzer.cumulative_resources import degree_profile
+        return degree_profile(df,heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
+    if k=="cumulative_nv":
+        from epw_climate_analyzer.cumulative_resources import ventilation_profile
+        return ventilation_profile(df)
+    if k=="climate_anomaly":
+        from epw_climate_analyzer.climate_anomalies import figure
+        f,note,_=figure(df,df,c,a[0],a[1],a[2],year=a[3])
+        return f,note
     from epw_climate_analyzer import directional_climate as wind
     if k in ("wind_mean","wind_classes","wind_panel","wind_rain"):
         if k=="wind_panel":
@@ -150,11 +174,14 @@ def atlas_live(d,df,context):
             series=daily["sum"];events=w if wet else dry
             from epw_climate_analyzer.precipitation_findings import wet_dry_interpretation
             extra=wet_dry_interpretation(df,wet=wet,threshold=threshold,minimum=1)
-        quantity="Daily temperature [°C]" if k=="temp_events" else "Daily precipitation [mm]" if k=="wetdry" else cat.LABELS.get(c,d.unit)
+        from epw_climate_analyzer.relationship_findings import LABELS as RELATIONSHIP_LABELS
+        quantity=f"Daily { {'max':'maximum','mean':'mean','min':'minimum'}[statistic]} temperature [°C]" if k=="temp_events" else "Daily precipitation [mm]" if k=="wetdry" else RELATIONSHIP_LABELS.get(c,f"{cat.LABELS.get(c,c)} [{d.unit}]")
         if style=="timeline":
             f=event_timeline_figure(events,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
         elif style=="intensity":
-            f=go.Figure(go.Scatter(x=events.duration,y=events.peak,mode="markers",marker_color=event_color(quantity,above),customdata=events.excess))
+            from epw_climate_analyzer.event_severity import bubble_figure,bubble_note
+            f=bubble_figure(events,unit=unit,threshold=threshold,above=above,quantity=quantity)
+            extra=(extra+" "+bubble_note(events,unit=unit,above=above,quantity=quantity)).strip()
         else:
             counts=events.duration.value_counts().sort_index()
             f=go.Figure(go.Bar(x=counts.index,y=counts,name="Number of events",marker_color=event_color(quantity,above)))
