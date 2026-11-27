@@ -557,6 +557,11 @@ def merge_plotly_config(
 def render_presentation_sidebar(st: Any) -> None:
     """Frequently used global visual controls; separate background and export."""
     ensure_default_state(st.session_state)
+    # Separate analysis navigation from the global presentation settings.
+    st.sidebar.html(
+        '<hr style="border:0;border-top:1px solid currentColor;opacity:0.18;margin:8px 0;" '
+        'aria-label="Application settings">'
+    )
     with st.sidebar.expander("Appearance", expanded=False,icon=":material/palette:"):
         st.selectbox(
             "Canvas",
