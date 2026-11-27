@@ -11,10 +11,12 @@ from .heatmap_presentation import (
     CONTOUR_MIN_WIDTH, CONTOUR_DEFAULT_WIDTH, CONTOUR_MAX_WIDTH,
 )
 
+from .circular_heatmap import CARTESIAN, CIRCULAR, ARRANGEMENTS, CALENDAR_ANGLE, eligible as circular_eligible
+
 STORE="_r219_heatmap_settings"
 COUNTERS="_r219_heatmap_occurrences"
 MAX_PREFERENCES=128
-DEFAULT={"mode":CONTOURS,"interval":0.,"labels":True,"width":CONTOUR_DEFAULT_WIDTH,"contrast":"Auto"}
+DEFAULT={"mode":CONTOURS,"interval":0.,"labels":True,"width":CONTOUR_DEFAULT_WIDTH,"contrast":"Auto","geometry":CARTESIAN,"arrangement":CALENDAR_ANGLE}
 
 def semantic_key(fig,page):
     # Include chart family, physical quantity and axes, not variable dates,
@@ -56,7 +58,9 @@ def local_heatmap_settings(st,fig):
     if not any(t.type=="heatmap" for t in fig.data):return {**DEFAULT,"mode":TILES}
     # Eligibility remains owned by the scientific presentation guard. Invalid,
     # categorical, circular and incomplete grids retain their original tiles.
-    if not any(_eligible(fig,t) is not None for t in fig.data if t.type=="heatmap"):
+    contour_ok=any(_eligible(fig,t) is not None for t in fig.data if t.type=="heatmap")
+    circular_ok=circular_eligible(fig) is not None
+    if not contour_ok and not circular_ok:
         return {**DEFAULT,"mode":TILES}
     state=st.session_state
     key=chart_key(fig,state)
@@ -64,6 +68,22 @@ def local_heatmap_settings(st,fig):
     prefix="_r219_hm_"+key+"_"
     state.setdefault(prefix+"mode",saved["mode"])
     with st.container():
+        geometry=CARTESIAN
+        arrangement=saved["arrangement"]
+        if circular_ok:
+            state.setdefault(prefix+"geometry",saved["geometry"])
+            geometry=st.radio("Heat-map geometry",[CARTESIAN,CIRCULAR],key=prefix+"geometry",horizontal=True)
+        if geometry==CIRCULAR:
+            state.setdefault(prefix+"arrangement",arrangement)
+            arrangement=st.radio("Circular arrangement",ARRANGEMENTS,key=prefix+"arrangement",horizontal=True)
+            st.caption("Circular tiles preserve the original calendar cells and missing periods.")
+            values={**saved,"geometry":geometry,"arrangement":arrangement}
+            save_preferences(state,key,values)
+            return {**values,"mode":TILES}
+        if not contour_ok:
+            values={**saved,"geometry":CARTESIAN,"arrangement":arrangement}
+            save_preferences(state,key,values)
+            return {**values,"mode":TILES}
         columns=st.columns([2,1])
         mode=columns[0].radio("Heat-map visualization",MODES,key=prefix+"mode",horizontal=True,
                               help="This setting applies only to this diagram.")
@@ -71,7 +91,7 @@ def local_heatmap_settings(st,fig):
         if mode!=TILES:
             state.setdefault(prefix+"labels",saved["labels"])
             labels=columns[1].checkbox("Contour labels",key=prefix+"labels")
-        values={**saved,"mode":mode,"labels":labels}
+        values={**saved,"mode":mode,"labels":labels,"geometry":geometry,"arrangement":arrangement}
         if mode!=TILES:
             for field in ("interval","width","contrast"):state.setdefault(prefix+field,saved[field])
             with st.expander("Contour settings",expanded=False):
