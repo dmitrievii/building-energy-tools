@@ -119,6 +119,15 @@ def analyze(target,reference,column,start,end):
         raise ValueError("Target and reference analysis clocks must match.")
     if target.attrs.get("canonical_native_resolution")!=reference.attrs.get("canonical_native_resolution"):
         raise ValueError("Target and reference source resolutions must match.")
+    if column not in target or column not in reference or reference.index.has_duplicates or target.index.has_duplicates:
+        raise ValueError("The historical quantity requires unique target and reference records.")
+    if not target.index.isin(reference.index).all():
+        raise ValueError("The target must be a filtered view of the same loaded archive.")
+    if not np.array_equal(pd.to_numeric(target[column],errors="coerce").to_numpy(dtype=float),
+                          pd.to_numeric(reference[column].reindex(target.index),errors="coerce").to_numpy(dtype=float),equal_nan=True):
+        raise ValueError("Target and reference observations must come from the same loaded archive.")
+    if str(reference.attrs.get("canonical_native_resolution","")).lower()!="monthly" and not np.isclose(native_interval_hours(target),native_interval_hours(reference)):
+        raise ValueError("Target and reference native intervals must match.")
     if start<int(reference.index.year.min()) or end>int(reference.index.year.max()):
         raise ValueError("The reference interval must lie within the loaded archive.")
     a=monthly_values(target,column);r=monthly_values(reference,column)
@@ -143,7 +152,7 @@ def figure(target,reference,column,start,end,view,*,year=None,relative=False):
         an=an.divide(ref["mean"].where(ref["mean"]>0),axis=1)*100
         unit="%"
     years=list(a["monthly"].index)
-    if year is None:year=years[-1]
+    if year is None:year=int(target.index.year.max())
     if year not in years:raise ValueError("Selected target year is outside the filtered observation period.")
     months=[calendar.month_abbr[m] for m in range(1,13)]
     f=go.Figure()
@@ -201,7 +210,7 @@ def figure(target,reference,column,start,end,view,*,year=None,relative=False):
     if view==VIEWS[1]:note+=f" P05–P95 describes interannual variation, with at least {MIN_ENVELOPE_YEARS} valid reference years per month."
     if relative:note+=" Relative departure is 100 × (target − reference)/reference for positive reference totals."
     if end-start+1<30:note+=" This is a selected short-period reference climatology."
-    else:note+=" Reference sample counts are retained for each calendar month."
+    else:note+=" Reference sample counts are retained for each calendar month; the selected interval does not by itself establish a certified standard climatological normal."
     if view==VIEWS[3]:note+=" Annual departures use the mean of complete annual reference aggregates; state means are weighted by calendar duration and totals are summed."
     note+=" Target years within the reference interval contribute to that reference."
     return f,note,a
