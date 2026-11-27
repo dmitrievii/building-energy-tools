@@ -3592,6 +3592,8 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         if complete(df,DEW):
             chart_options.append("Condensation potential")
         chart_options.append("Humidity persistence")
+        from epw_climate_analyzer.sensitivity_ui import available
+        if available(df,["surface"]):chart_options.append("Surface moisture sensitivity")
     chart_group = st.selectbox("Analysis type", chart_options, key="humidity_analysis_type")
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
@@ -3758,6 +3760,9 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
     elif chart_group == "Humidity persistence":
         from epw_climate_analyzer.p4_ui import persistence_panel
         persistence_panel(df,render_plot)
+    elif chart_group == "Surface moisture sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        panel(df,render_plot,["surface"],key="r221_surface")
     elif chart_group == "Condensation potential":
         from epw_climate_analyzer.p3_ui import condensation_panel
         condensation_panel(df,render_plot)
@@ -4286,12 +4291,18 @@ def render_shading_design(df: pd.DataFrame) -> None:
     if all(c in df and df[c].notna().any() for c in ("solar_azimuth_deg","solar_apparent_zenith_deg")):
         options.append("Seasonal and hourly shading")
         options.append("Geometric shading mask")
+    from epw_climate_analyzer.sensitivity_ui import available
+    if available(df,["solar"]):options.append("Climatic threshold sensitivity")
     if not options:
         st.info("Shading analysis requires site solar geometry or complete paired plane-of-array radiation inputs.")
         return
     if st.session_state.get("shading_design_analysis") not in options:
         st.session_state["shading_design_analysis"]=options[0]
     view=st.selectbox("Analysis type",options,key="shading_design_analysis")
+    if view=="Climatic threshold sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        panel(df,render_plot,["solar"],key="r221_solar")
+        return
     geometry=_shading_geometry("shading_analysis")
     if view=="Irradiation reduction":
         if "direct_normal_radiation_is_calculated" in df and df["direct_normal_radiation_is_calculated"].fillna(False).any():
@@ -5211,6 +5222,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
             "Psychrometric NV overlay",
             "Night-flushing potential",
             "Continuous ventilation periods",
+            "Threshold sensitivity",
         ] + (["Temperature–wind suitability"] if wind_available else [])
           + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
@@ -5238,6 +5250,13 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
             df, stages, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
         ))
         st.dataframe(stages, hide_index=True, use_container_width=True)
+    elif chart_group == "Threshold sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        fixed=dict(t_min_c=t_min,t_max_c=t_max,d_max_g_kg=d_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max,
+                   occupied_only=occupied_only,occupied_start_hour=occupied_start,occupied_end_hour=occupied_end,weekdays_only=weekdays_only)
+        panel(df,render_plot,["nv_temperature_moisture","nv_temperature_range","nv_wind_range"],key="r221_nv",fixed=fixed,
+              references={"nv_temperature_moisture":(t_max,d_max),"nv_temperature_range":(t_min,t_max),
+                          "nv_wind_range":(wind_min if wind_min is not None else .5,wind_max if wind_max is not None else 6.)})
     elif chart_group == "Temperature–wind suitability":
         from epw_climate_analyzer.p3_ui import nv_sensitivity
         nv_sensitivity(df,eligibility_mask(df,mask,wind=wind_filter),wind_available,render_plot,
@@ -5351,11 +5370,14 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
     else:
         from epw_climate_analyzer.p3_ui import persistence_panel
         from epw_climate_analyzer.p3_comfort import numeric,T,full_daily_temperature
-        view=st.selectbox("Chart type",["Heat map","Nightly persistence"],key="p3_night_chart")
+        view=st.selectbox("Chart type",["Heat map","Nightly persistence","Threshold sensitivity"],key="p3_night_chart")
         hot=st.number_input("Preceding hot-day threshold [°C]",value=26.,step=.5,key="p3_night_hot")
         cool=st.number_input("Night temperature limit [°C]",value=20.,step=.5,key="p3_night_cool")
         night_mask = night_flushing_condition(df,day_hot_threshold_c=hot,night_max_c=cool)
-        if view=="Nightly persistence":
+        if view=="Threshold sensitivity":
+            from epw_climate_analyzer.sensitivity_ui import panel
+            panel(df,render_plot,["night"],key="r221_night",references={"night":(hot,cool)})
+        elif view=="Nightly persistence":
             days=pd.DatetimeIndex(df.index).normalize()
             anchor=days.where(df.index.hour>6,days-pd.DateOffset(days=1))
             complete=full_daily_temperature(df).reindex(anchor).notna().to_numpy()
@@ -5395,10 +5417,14 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
             "Design-day candidates",
             "Ventilation load proxy",
             "Adaptive comfort",
+            "Threshold sensitivity",
         ],
     )
 
-    if chart_group == "Passive strategy summary":
+    if chart_group == "Threshold sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        panel(df,render_plot,["neutral","economizer"],key="r221_passive")
+    elif chart_group == "Passive strategy summary":
         view = st.radio(
             "View",
             ["Annual totals", "Monthly strategy matrix"],
@@ -5473,11 +5499,14 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         h_return = st.slider("Return-air enthalpy reference [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
         mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
         chart = st.selectbox(
-            "Chart type", ["Eligible hours by period","Climatic screening stages"],
+            "Chart type", ["Eligible hours by period","Climatic screening stages","Threshold sensitivity"],
             key="hvac_economizer_chart",
         )
         finding=economizer_interpretation(df,h_return=h_return)
-        if chart=="Climatic screening stages":
+        if chart=="Threshold sensitivity":
+            from epw_climate_analyzer.sensitivity_ui import panel
+            panel(df,render_plot,["economizer"],key="r221_economizer",references={"economizer":(24.,h_return)})
+        elif chart=="Climatic screening stages":
             steps=economizer_stages(df,h_return=h_return)
             render_plot(economizer_stages_figure(steps),finding)
             st.dataframe(steps,hide_index=True,use_container_width=True)
