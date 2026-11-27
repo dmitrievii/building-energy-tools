@@ -567,6 +567,27 @@ try {
   report.metrics.circularCalendar={calendarAngle,clockAngle};
   report.checks.circularCalendar=true;
 
+  await page.goto(TARGET_URL+'?anomalies=1',{waitUntil:'domcontentloaded'});
+  const anomalyFrame=await waitForCharts(page,4);
+  const anomalyPlots=await anomalyFrame.locator('.js-plotly-plot').evaluateAll(nodes=>nodes.map(node=>({
+    types:node._fullData.map(t=>t.type),
+    reference:[node._fullLayout.meta?.reference_start,node._fullLayout.meta?.reference_end],
+    counts:node._fullLayout.meta?.reference_sample_counts,
+    zero:node._fullData[0]?.zmid,
+    limits:[node._fullData[0]?.zmin,node._fullData[0]?.zmax],
+    annualYears:node._fullLayout.meta?.annual_reference_years,
+    envelope:node._fullData.some(t=>t.fill==='tonexty')
+  })));
+  if(anomalyPlots.some(m=>m.reference[0]!==1991||m.reference[1]!==2020||m.annualYears!==30||m.counts.some(n=>n!==30))
+     ||anomalyPlots[0].types[0]!=='bar'||!anomalyPlots[1].envelope
+     ||anomalyPlots[2].types[0]!=='heatmap'||anomalyPlots[2].zero!==0
+     ||Math.abs(anomalyPlots[2].limits[0]+anomalyPlots[2].limits[1])>1e-8
+     ||anomalyPlots[3].types[0]!=='bar')
+    throw new Error('Historical anomaly visual reference contract failed: '+JSON.stringify(anomalyPlots));
+  report.metrics.climateAnomalies=anomalyPlots;
+  report.checks.climateAnomalies=true;
+  await page.screenshot({path:OUT_DIR+'/20-climate-anomalies.png',fullPage:true});
+
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));
