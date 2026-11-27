@@ -109,6 +109,10 @@ def catalogue(df,context,coverage=FULL):
                     for kind in ("histogram","box","violin"):
                         add(chapter,label+" · "+{"histogram":"histogram","box":"monthly boxplot","violin":"monthly violin"}[kind]+suffix,kind,c,u,(basis,),ok=valid,reason="No wet observation intervals.")
                 if compatible_types(df,c):
+                    for grouping in (("Monthly",) if coverage==REP else ("Monthly","Seasonal")):
+                        for basis in bases:
+                            suffix=" · wet intervals" if basis=="wet" else " · all intervals" if c==P else ""
+                            add(chapter,f"{label} · {grouping.lower()} ridgeline"+suffix,"ridgeline",c,u,(grouping,basis),ok=basis!="wet" or base.numeric(df,c).gt(0).any(),reason="No wet observation intervals.")
                     for style in (("Overlay",) if coverage==REP else ("Overlay","Small multiples")):
                         for centre in (("mean","median") if coverage==FULL else ("mean",)):
                             for band in (("P05–P95","Min–max","None") if coverage==FULL else ("P05–P95",)):
