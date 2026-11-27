@@ -84,7 +84,8 @@ class PublicUxContractTests(unittest.TestCase):
     def test_essential_landing_copy_does_not_use_low_contrast_caption(self) -> None:
         source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
         self.assertNotIn("st.caption(APP_RELEASE_LABEL)", source)
-        self.assertIn("st.write(APP_RELEASE_LABEL)", source)
+        self.assertNotIn("st.write(APP_RELEASE_LABEL)", source)
+        self.assertIn("st.markdown(ABOUT_MARKDOWN)", source)
         self.assertNotIn(
             'st.caption(\n        "Start with an EPW weather file from your computer or select a climate from the reviewed "',
             source,

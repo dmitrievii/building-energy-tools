@@ -79,7 +79,6 @@ from epw_climate_analyzer.ui_contract import (
     APP_INDEPENDENCE_NOTICE,
     APP_INTRO,
     APP_NAME,
-    APP_RELEASE_LABEL,
     APP_TAGLINE,
     NAVIGATION_KEY,
     NAVIGATION_PAGES,
@@ -1637,10 +1636,12 @@ def render_climate_file_source() -> None:
     st.title(APP_NAME)
     st.markdown(f"#### {APP_TAGLINE}")
     st.write(APP_INTRO)
+    from epw_climate_analyzer.about_content import ABOUT_MARKDOWN
     with st.expander("About", expanded=False):
-        st.write(APP_RELEASE_LABEL)
+        st.markdown(ABOUT_MARKDOWN)
+    with st.expander("Legal notice", expanded=False):
         st.write(APP_ENGINEERING_DISCLAIMER)
-        st.caption(APP_INDEPENDENCE_NOTICE)
+        st.write(APP_INDEPENDENCE_NOTICE)
     st.write(
         "Start with an EPW weather file, select a reviewed Climate.OneBuilding climate, or load measured "
         "historical station observations from GeoSphere Austria, or generate a research climate year. No building model is required."

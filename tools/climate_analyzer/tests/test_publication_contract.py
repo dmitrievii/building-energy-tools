@@ -104,11 +104,23 @@ class PublicationContractTests(unittest.TestCase):
 
     def test_public_app_exposes_beta_and_disclaimer_contract(self) -> None:
         app_source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
-        self.assertIn("APP_RELEASE_LABEL", app_source)
-        self.assertIn('st.expander("About", expanded=False)', app_source)
-        self.assertIn('with st.expander("About", expanded=False):\n        st.write(APP_RELEASE_LABEL)',app_source)
-        self.assertIn("APP_ENGINEERING_DISCLAIMER", app_source)
-        self.assertIn("APP_INDEPENDENCE_NOTICE", app_source)
+        self.assertIn('with st.expander("About", expanded=False):\n        st.markdown(ABOUT_MARKDOWN)', app_source)
+        self.assertNotIn("APP_RELEASE_LABEL", app_source)
+        self.assertIn('with st.expander("Legal notice", expanded=False):\n        st.write(APP_ENGINEERING_DISCLAIMER)\n        st.write(APP_INDEPENDENCE_NOTICE)', app_source)
+        service = (TOOL_ROOT / "epw_climate_analyzer" / "sidebar_layout.py").read_text(encoding="utf-8")
+        self.assertIn('st.caption(f"{APP_RELEASE_LABEL} · runtime {RUNTIME_BUILD_ID[:12]}")',service)
+
+    def test_about_describes_capabilities_without_overstating_publication_status(self) -> None:
+        from epw_climate_analyzer.about_content import ABOUT_MARKDOWN
+        for heading in ("Capabilities", "Scientific approach", "Development", "Application scope"):
+            self.assertIn(f"**{heading}**", ABOUT_MARKDOWN)
+        self.assertIn(AUTHOR_NAME, ABOUT_MARKDOWN)
+        self.assertIn("Building Energy Tools", ABOUT_MARKDOWN)
+        self.assertIn("Graz University of Technology", ABOUT_MARKDOWN)
+        self.assertIn("independent research and teaching project", ABOUT_MARKDOWN)
+        self.assertIn("Project-specific engineering verification remains the responsibility of the designer.", ABOUT_MARKDOWN)
+        self.assertNotIn(TOOL_VERSION, ABOUT_MARKDOWN)
+        self.assertNotIn("Beta candidate", ABOUT_MARKDOWN)
 
 
 if __name__ == "__main__":

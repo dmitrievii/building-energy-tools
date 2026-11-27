@@ -162,8 +162,8 @@ def render_service(st,area,render_memory):
     st.header("Service & Diagnostics")
     st.button("Back to analysis",key="_r219_service_back",on_click=toggle)
     from .runtime_identity import RUNTIME_BUILD_ID
-    from .release_info import TOOL_VERSION
-    st.caption(f"Climate Analyzer {TOOL_VERSION} · runtime {RUNTIME_BUILD_ID[:12]}")
+    from .ui_contract import APP_RELEASE_LABEL
+    st.caption(f"{APP_RELEASE_LABEL} · runtime {RUNTIME_BUILD_ID[:12]}")
     render_memory(st)
     return True
 
