@@ -196,7 +196,7 @@ def calculated_statistics_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         ],
         "Wind": [
             MetricDefinition("Wind", "Mean wind speed", _fmt_number(_safe_mean(df, "wind_speed_m_s")), "m/s", "Average wind speed from EPW."),
-            MetricDefinition("Wind", "Wind speed P95", _fmt_number(_safe_quantile(df, "wind_speed_m_s", 0.95)), "m/s", "High but non-maximum wind-speed indicator."),
+            MetricDefinition("Wind", "Wind speed P05 / P95", f"{_fmt_number(_safe_quantile(df, 'wind_speed_m_s', 0.05))} / {_fmt_number(_safe_quantile(df, 'wind_speed_m_s', 0.95))}", "m/s", "Lower and upper wind-speed percentiles for assessing low-wind conditions and high-wind exposure."),
             MetricDefinition("Wind", "Maximum wind speed", _fmt_number(_safe_max(df, "wind_speed_m_s")), "m/s", f"Timestamp: {_timestamp_at_extreme(df, 'wind_speed_m_s', 'max')}."),
             MetricDefinition("Wind", "Calm hours below 1 m/s", f"{_count(df, df['wind_speed_m_s'] < 1.0):,}" if "wind_speed_m_s" in df else "n/a", "h", "Low wind-speed hours; relevant for natural ventilation and outdoor comfort."),
             MetricDefinition("Wind", "Strong-wind hours above 8 m/s", f"{_count(df, df['wind_speed_m_s'] > 8.0):,}" if "wind_speed_m_s" in df else "n/a", "h", "Potential wind discomfort or façade-exposure periods."),
