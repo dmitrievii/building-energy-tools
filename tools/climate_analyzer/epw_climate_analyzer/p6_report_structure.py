@@ -234,6 +234,24 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
         f.update_layout(margin=dict(l=18,r=18 if classes else 96,t=12,b=68 if classes else 18),
             legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.005,yanchor="bottom",font=dict(size=small_font),title=dict(font=dict(size=small_font))))
         return replay_chart_overrides(reflow_monthly_wind_roses(f,columns=4 if w>h*1.12 else 3,font_size=small_font),include_title=False)
+    # Calendar annuli use the shared heat-map colouraxis, not a directional
+    # legend. Reserve a dedicated scale margin without losing the circle.
+    from .circular_heatmap import LAYOUT as CIRCULAR_LAYOUT
+    if isinstance(f.layout.meta,dict) and CIRCULAR_LAYOUT in f.layout.meta:
+        bars=[]
+        for t in f.data:
+            if t.type!="barpolar" or t.visible in (False,"legendonly"):continue
+            if t.marker.coloraxis:
+                axis=getattr(f.layout,t.marker.coloraxis)
+                if axis.showscale is not False:bars.append(axis.colorbar)
+            elif t.marker.showscale:bars.append(t.marker.colorbar)
+        f.update_layout(margin=dict(l=30,r=92 if bars else 30,t=28,b=28),
+                        polar=dict(domain=dict(x=[0.,1.],y=[0.,1.])))
+        f.layout.polar.angularaxis.tickfont.size=px
+        f.layout.polar.radialaxis.tickfont.size=px
+        for bar in bars:
+            bar.update(x=1.03,xanchor="left",y=.5,len=.75,thickness=12)
+        return replay_chart_overrides(f,include_title=False)
     polar=any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar") for t in f.data)
     if polar:
         # A polar circle is height-limited. Place it at the left of the
