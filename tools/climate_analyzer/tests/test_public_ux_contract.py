@@ -151,5 +151,31 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertEqual(missing.loc["Wind speed P05 / P95", "Value"], "n/a / n/a")
 
 
+    def test_compare_summary_renders_only_selected_ranking(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        summary = source.split("def render_compare_summary(", 1)[1].split("def render_compare_temperature(", 1)[0]
+        self.assertNotIn("hdd_cdd_grouped_chart(", summary)
+        self.assertEqual(summary.count("render_plot("), 1)
+        self.assertIn("ranked_metric_interpretation(metrics, metric, reference_name)", summary)
+
+    def test_ranked_interpretation_uses_selected_quantity(self) -> None:
+        import pandas as pd
+        from epw_climate_analyzer.comparison import ranked_metric_interpretation
+
+        metric = "Mean wind speed [m/s]"
+        frame = pd.DataFrame({
+            "Climate": ["A", "B", "C"],
+            metric: [1.0, 3.5, float("nan")],
+            "HDD18 [K·h]": [3000, 1000, 2000],
+        })
+        result = ranked_metric_interpretation(frame, metric, "A")
+        self.assertIn("1 m/s in A", result)
+        self.assertIn("3.5 m/s in B", result)
+        self.assertIn("+2.5 m/s", result)
+        self.assertNotIn("HDD", result)
+        self.assertNotIn("K·h", result)
+        self.assertIn("No valid values", ranked_metric_interpretation(frame.assign(**{metric: float("nan")}), metric))
+
+
 if __name__ == "__main__":
     unittest.main()
