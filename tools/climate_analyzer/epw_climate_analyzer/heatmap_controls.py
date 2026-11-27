@@ -6,12 +6,15 @@ Semantic chart keys are independent of data values and filter selections.
 from __future__ import annotations
 from hashlib import sha256
 import json
-from .heatmap_presentation import CONTOURS, TILES, MODES, _eligible, _meta
+from .heatmap_presentation import (
+    CONTOURS, TILES, MODES, _eligible, _meta,
+    CONTOUR_MIN_WIDTH, CONTOUR_DEFAULT_WIDTH, CONTOUR_MAX_WIDTH,
+)
 
 STORE="_r219_heatmap_settings"
 COUNTERS="_r219_heatmap_occurrences"
 MAX_PREFERENCES=128
-DEFAULT={"mode":CONTOURS,"interval":0.,"labels":True,"width":1.,"contrast":"Auto"}
+DEFAULT={"mode":CONTOURS,"interval":0.,"labels":True,"width":CONTOUR_DEFAULT_WIDTH,"contrast":"Auto"}
 
 def semantic_key(fig,page):
     # Include chart family, physical quantity and axes, not variable dates,
@@ -73,7 +76,8 @@ def local_heatmap_settings(st,fig):
             for field in ("interval","width","contrast"):state.setdefault(prefix+field,saved[field])
             with st.expander("Contour settings",expanded=False):
                 values["interval"]=st.number_input("Contour interval (0 = automatic)",min_value=0.,step=.5,key=prefix+"interval")
-                values["width"]=st.slider("Contour line thickness [px]",.5,3.,step=.25,key=prefix+"width")
+                values["width"]=st.slider("Contour line thickness [px]", min_value=CONTOUR_MIN_WIDTH,
+                                          max_value=CONTOUR_MAX_WIDTH, step=.25, key=prefix+"width")
                 values["contrast"]=st.selectbox("Contour line contrast",["Auto","Dark","Light"],key=prefix+"contrast")
     save_preferences(state,key,values)
     return values

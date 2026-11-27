@@ -66,7 +66,7 @@ EXTRA_DEFAULTS = {"show_title": True, "show_legend": True, "show_grid": True,
                   "line_scale": 1.0, "export_format": "PNG", "north_rotation": 0,
                   "axis_title": "", "axis_min": 0.0, "axis_max": 100.0,
                   "heatmap_mode":"Tiles","contour_interval":0.0,"contour_labels":True,
-                  "contour_width":1.0,"contour_contrast":"Auto"}
+                  "contour_width":0.25,"contour_contrast":"Auto"}
 
 def _key(name):
     return "chart_presentation_" + name
@@ -93,7 +93,7 @@ class ChartPresentationSettings:
     heatmap_mode: str = "Tiles"
     contour_interval: float = 0.0
     contour_labels: bool = True
-    contour_width: float = 1.0
+    contour_width: float = 0.25
     contour_contrast: str = "Auto"
 
     @property

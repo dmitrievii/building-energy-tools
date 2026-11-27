@@ -30,9 +30,15 @@ class TemperatureR21Tests(unittest.TestCase):
         fig = go.Figure(go.Heatmap(
             x=["Jan", "Feb"], y=[0, 12], z=[[10., 20.], [5., 30.]]
         ))
-        value = temperature_figure_interpretation(self.df, fig, "heatmap")
-        self.assertIn("5.0 °C (Jan, hour 12)", value)
-        self.assertIn("30.0 °C (Feb, hour 12)", value)
+        # Match the explicit calendar/hour axes emitted by production charts.
+        fig.update_layout(xaxis_title="Month", yaxis_title="Hour of day")
+        df = pd.DataFrame(
+            {"dry_bulb_temperature_c": [19., 19.]},
+            index=pd.to_datetime(["2026-01-01 12:00", "2026-02-01 12:00"]),
+        )
+        value = temperature_figure_interpretation(df, fig, "heatmap")
+        self.assertIn("5.0 °C (January 2026, 12:00–13:00)", value)
+        self.assertIn("30.0 °C (February 2026, 12:00–13:00)", value)
         self.assertIn("seasonal concentration of outdoor temperatures", value)
 
     def test_duration_is_climate_screen_only(self):

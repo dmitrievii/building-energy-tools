@@ -20,6 +20,9 @@ ORIGINAL="ige_heatmap_original"
 # Fixed physical default steps; automatic nice-number fallback handles
 # unusually small or large domains, including irradiation and pressure.
 MAX_LEVELS=60
+CONTOUR_MIN_WIDTH=0.25
+CONTOUR_DEFAULT_WIDTH=CONTOUR_MIN_WIDTH
+CONTOUR_MAX_WIDTH=3.0
 
 def _meta(obj):
     m=getattr(obj,"meta",None)
@@ -149,7 +152,7 @@ def _restore(fig):
             t.showscale=old.get("showscale")
             t.meta=old.get("meta")
 
-def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=1.,contrast="Auto"):
+def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=CONTOUR_DEFAULT_WIDTH,contrast="Auto"):
     if mode not in MODES:mode=TILES
     # Avoid any data scan/allocation in the default path on ordinary figures.
     if not any(_meta(t).get(LAYER) or _meta(t).get(ORIGINAL) for t in fig.data) and mode==TILES:return fig
@@ -186,7 +189,7 @@ def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=1.
             showlegend=False,showscale=mode==CONTOURS and not trace.coloraxis,
             autocontour=False,contours=dict(**levels,coloring="heatmap" if mode==CONTOURS else "none",
                 showlabels=bool(labels),labelfont=dict(color=line_color,size=11)),
-            line=dict(color=line_color,width=max(.25,min(4.,float(width))),smoothing=0),
+            line=dict(color=line_color,width=max(CONTOUR_MIN_WIDTH,min(4.,float(width))),smoothing=0),
             name="Contour rendering",meta={LAYER:True,"presentation_only_trace":True},**local)
         # Validate the complete generated trace before touching canonical tiles.
         contour=go.Contour(**opts)
@@ -203,4 +206,4 @@ def settings_from_context(context):
 
 def context_from_state(state):
     """Defaults for automatic Atlas and standard-report diagrams, not explorer state."""
-    return {"mode":CONTOURS,"interval":0.,"labels":True,"width":1.,"contrast":"Auto"}
+    return {"mode":CONTOURS,"interval":0.,"labels":True,"width":CONTOUR_DEFAULT_WIDTH,"contrast":"Auto"}

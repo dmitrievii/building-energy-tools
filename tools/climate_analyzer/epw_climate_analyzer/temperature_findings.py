@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from .interpretations import _fmt, _fmt_hours, _duration_hours_from_count
-from .period_display import format_plotted_time
+from .period_display import format_plotted_time, format_heatmap_cell
 from .profile_interpretation import canonical_profile_kind, profile_band, profile_centre
 
 
@@ -87,9 +87,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         if z.ndim != 2 or not np.isfinite(z).any():
             return "No valid temperature cells are plotted."
         lo, hi = np.unravel_index(np.nanargmin(z), z.shape), np.unravel_index(np.nanargmax(z), z.shape)
-        x, y = list(trace.x), list(trace.y)
-        y_dimension = "year" if "year" in lower_name and "hour of day" not in lower_name else "hour"
-        cell = lambda pos: f'{str(x[pos[1]]) if pos[1]<len(x) else "?"}, {y_dimension} {str(y[pos[0]]) if pos[0]<len(y) else "?"}'
+        cell = lambda pos: format_heatmap_cell(fig, trace, pos, df)
         return (f"For the selected heatmap statistic, the lowest displayed cell is "
                 f"{_fmt(z[lo])} °C ({cell(lo)}) and the highest is {_fmt(z[hi])} °C ({cell(hi)}). "
                 "The absolute colour scale reveals the timing and seasonal concentration of outdoor temperatures. " + climate)
