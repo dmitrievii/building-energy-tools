@@ -72,7 +72,17 @@ def _color_contract(t, fig, values):
     hi = scale.cmax if t.coloraxis else t.zmax
     lo = float(values.min()) if lo is None else float(lo)
     hi = float(values.max()) if hi is None else float(hi)
-    palette = [list(stop) for stop in scale.colorscale] if scale.colorscale else "Viridis"
+    # Plotly stores stops as tuples, and named CSS colours are legal in
+    # a continuous scale. Normalize to RGB without changing stop locations.
+    from PIL import ImageColor
+    palette="Viridis"
+    if scale.colorscale:
+        palette=[]
+        for position,css in scale.colorscale:
+            channels=ImageColor.getrgb(css)
+            if len(channels)==4 and channels[3]!=255:
+                raise ValueError("Translucent colour scales require exact tiles.")
+            palette.append([float(position),f"rgb({channels[0]}, {channels[1]}, {channels[2]})"])
     reverse = bool(scale.reversescale)
     def color(value):
         u = float(np.clip((value-lo)/max(hi-lo,1e-30),0.,1.))
