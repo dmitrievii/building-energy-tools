@@ -2702,12 +2702,14 @@ def render_compare_summary(climates: list[ClimateDataset], reference_name: str) 
         mime="text/csv",
     )
     numeric_columns = [col for col in metrics.columns if pd.api.types.is_numeric_dtype(metrics[col])]
-    default_metric = "HDD18 [K·h]" if "HDD18 [K·h]" in numeric_columns else numeric_columns[0]
+    if not numeric_columns:
+        st.info("No numeric comparison metrics are available.")
+        return
+    default_metric = "Annual mean T [°C]" if "Annual mean T [°C]" in numeric_columns else numeric_columns[0]
     metric = st.selectbox("Ranked metric", numeric_columns, index=numeric_columns.index(default_metric))
+    from epw_climate_analyzer.comparison import ranked_metric_interpretation
     fig = ranked_metric_chart(metrics, metric)
-    render_plot(fig, comparison_interpretation(metrics, reference_name))
-    fig2 = hdd_cdd_grouped_chart(metrics)
-    render_plot(fig2, comparison_interpretation(metrics, reference_name))
+    render_plot(fig, ranked_metric_interpretation(metrics, metric, reference_name))
 
 
 def render_compare_temperature(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
