@@ -127,11 +127,14 @@ def catalogue(df,context,coverage=FULL):
     for chapter,c,u in [(SOL,G,"kWh/m²"),(SOL,D,"kWh/m²"),(SOL,N,"kWh/m²"),(RAIN,P,"mm"),(RAIN,"precipitation_duration_min","h"),(SKY,"sunshine_duration_s","h")]:
         for period in (("Monthly",) if coverage==REP or monthly else TOTAL_PERIODS):
             add(chapter,f"{LABELS[c]} · total · {period}","total",c,u,(period,),ok=has(c))
+        add(chapter,f"{LABELS[c]} · cumulative annual profile","cumulative_resource",c,u,ok=has(c))
     for style in ("Walter–Lieth diagram","Climograph","Temperature–precipitation loop"):
         add(RAIN,style,"climate_summary",args=(style,),ok=has(T,P))
     for metric in ("Degree-days","Degree-hours"):
         for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS):
             add(TEMP,f"{metric} · {period}","degree",T,"K·d" if metric=="Degree-days" else "K·h",(metric,period),ok=hourly and has(T))
+    add(TEMP,"Heating and cooling · cumulative degree-hours","cumulative_degree",T,"K·h",ok=hourly and has(T))
+    add(NV,"Natural ventilation · cumulative suitable hours","cumulative_nv",args=(),ok=hourly and has(T,W))
     for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS[:-1]):
         add(TEMP,f"Temperature thresholds · {period}","temp_threshold",T,"h",(period,),ok=hourly and has(T))
     for stat in ("max","mean","min"):
