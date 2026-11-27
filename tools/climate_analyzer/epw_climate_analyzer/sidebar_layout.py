@@ -33,7 +33,7 @@ ICONS={
     "Solar and Radiation":"wb_sunny","Wind and Ventilation":"air",
     "Sky and Daylight":"partly_cloudy_day","Precipitation and Snow":"rainy",
     "Time Series and Overlay":"show_chart","Compare Climates":"compare_arrows",
-    "Data Quality":"database","Natural Ventilation":"air","Shading analysis":"wb_twilight",
+    "Data Quality":"database","Natural Ventilation":"window","Shading analysis":"wb_twilight",
     "HVAC and Passive Design":"home","Outdoor Thermal Comfort":"device_thermostat",
 }
 LABELS={"Humidity and Psychrometrics":"Humidity & psychrometrics",
