@@ -50,7 +50,7 @@ def available(df):
 def monthly_values(df,column):
     if not is_historical(df):raise ValueError("A real historical observation archive is required.")
     if df.empty or df.index.has_duplicates:raise ValueError("Historical observations must have unique timestamps.")
-    if df.index.year.nunique()>MAX_YEARS:raise ValueError("Select at most 150 historical years.")
+    if int(df.index.year.max())-int(df.index.year.min())+1>MAX_YEARS:raise ValueError("Select at most 150 calendar years.")
     q=QUANTITIES[column]
     if column not in df:raise ValueError("The selected source quantity is unavailable.")
     s=pd.to_numeric(df[column],errors="coerce").astype(float).sort_index()
@@ -81,7 +81,7 @@ def monthly_values(df,column):
         expected=weights
         observed=n.astype(float)*dt
         # Reject malformed cadence, including duplicated interval slots.
-        delta=np.diff(idx.asi8)
+        delta=np.diff(idx.as_unit('ns').asi8)
         native_ns=int(round(dt*3600*1e9))
         if np.any(delta % native_ns !=0):raise ValueError("Irregular source cadence; normalize observations before anomaly analysis.")
         value=(g.sum(min_count=1) if q.total else g.mean()).reindex(all_months)
@@ -158,9 +158,18 @@ def figure(target,reference,column,start,end,view,*,year=None,relative=False):
     elif view==VIEWS[1]:
         s=a["monthly"].loc[year].where(ref["mean"].notna())
         if not s.notna().any():raise ValueError("No comparable complete target months in the selected year.")
-        if ref.p05.notna().any():
-            f.add_scatter(x=months,y=ref.p95,mode="lines",line_width=0,showlegend=False,connectgaps=False)
-            f.add_scatter(x=months,y=ref.p05,mode="lines",line_width=0,fill="tonexty",fillcolor="rgba(100,116,139,.23)",name="Reference P05–P95",connectgaps=False)
+        # Separate contiguous reference-band segments so filled polygons
+        # never bridge a calendar month without sufficient reference years.
+        valid=np.flatnonzero(ref.p05.notna().to_numpy()&ref.p95.notna().to_numpy())
+        groups=np.split(valid,np.where(np.diff(valid)>1)[0]+1) if len(valid) else []
+        for i,g in enumerate(groups):
+            xx=[months[k] for k in g]
+            if len(g)==1:
+                lo,hi=float(ref.p05.iloc[g[0]]),float(ref.p95.iloc[g[0]])
+                f.add_scatter(x=xx*2,y=[lo,hi],mode="lines+markers",line_color="#94A3B8",name="Reference P05–P95",showlegend=i==0,legendgroup="reference_band")
+            else:
+                f.add_scatter(x=xx,y=ref.p95.iloc[g],mode="lines",line_width=0,showlegend=False,connectgaps=False,legendgroup="reference_band")
+                f.add_scatter(x=xx,y=ref.p05.iloc[g],mode="lines",line_width=0,fill="tonexty",fillcolor="rgba(100,116,139,.23)",name="Reference P05–P95",showlegend=i==0,legendgroup="reference_band",connectgaps=False)
         f.add_scatter(x=months,y=ref["median"],mode="lines+markers",line=dict(color="#64748B",dash="dash"),name="Reference median",connectgaps=False)
         f.add_scatter(x=months,y=ref["mean"],mode="lines",line=dict(color="#303030",dash="dot"),name="Reference mean",connectgaps=False)
         f.add_scatter(x=months,y=s,mode="lines+markers",line_color="#C94D40",name=str(year),connectgaps=False)
@@ -193,5 +202,6 @@ def figure(target,reference,column,start,end,view,*,year=None,relative=False):
     if relative:note+=" Relative departure is 100 × (target − reference)/reference for positive reference totals."
     if end-start+1<30:note+=" This is a selected short-period reference climatology."
     else:note+=" Reference sample counts are retained for each calendar month."
+    if view==VIEWS[3]:note+=" Annual departures use the mean of complete annual reference aggregates; state means are weighted by calendar duration and totals are summed."
     note+=" Target years within the reference interval contribute to that reference."
     return f,note,a
