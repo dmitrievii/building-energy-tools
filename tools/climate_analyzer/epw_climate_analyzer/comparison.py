@@ -841,11 +841,31 @@ def wind_rose_small_multiples(climates: list[ClimateDataset]) -> go.Figure:
     rows = int(np.ceil(len(climates) / 2))
     cols = 2 if len(climates) > 1 else 1
     specs = [[{"type": "polar"} for _ in range(cols)] for _ in range(rows)]
-    fig = make_subplots(rows=rows, cols=cols, specs=specs, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.12)
+    from html import escape
+    from textwrap import wrap
+
+    # Reserve a separate title band above each polar domain. Plotly's default
+    # subplot annotation sits on the domain edge, where angular labels extend.
+    fig = make_subplots(rows=rows, cols=cols, specs=specs,
+                        vertical_spacing=0.08 / max(1, rows - 1))
+    title_lines = [wrap(str(c.display_name), width=32) or ["Climate"] for c in climates]
+    max_lines = max(map(len, title_lines), default=1)
+    title_fraction = min(0.45, 0.15 + 0.06 * max_lines)
     bins = [0, 1, 2, 4, 6, 8, 12, np.inf]
     for i, climate in enumerate(climates):
         row = i // cols + 1
         col = i % cols + 1
+        polar = fig.get_subplot(row, col)
+        x0, x1 = polar.domain.x
+        y0, y1 = polar.domain.y
+        span = y1 - y0
+        polar.domain.y = [y0 + 0.09 * span, y1 - title_fraction * span]
+        polar.angularaxis.update(rotation=90, direction="clockwise",
+                                 tickmode="array", tickvals=list(range(0, 360, 45)),
+                                 ticktext=["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
+        fig.add_annotation(x=(x0 + x1) / 2, y=y1, xref="paper", yref="paper",
+                           xanchor="center", yanchor="top", showarrow=False,
+                           align="center", text="<br>".join(escape(line) for line in title_lines[i]))
         data = climate.data[["wind_direction_deg", "wind_speed_m_s"]].dropna().copy()
         data["direction_sector_deg"] = (np.round(data["wind_direction_deg"] / 22.5) * 22.5) % 360
         data["speed_bin"] = pd.cut(data["wind_speed_m_s"], bins=bins, labels=WIND_SPEED_LABELS, include_lowest=True)
@@ -853,7 +873,8 @@ def wind_rose_small_multiples(climates: list[ClimateDataset]) -> go.Figure:
         for label in WIND_SPEED_LABELS:
             subset = rose[rose["speed_bin"] == label]
             fig.add_trace(go.Barpolar(r=subset["hours"], theta=subset["direction_sector_deg"], name=label, marker_color=WIND_SPEED_COLOR_MAP[label], showlegend=i == 0), row=row, col=col)
-    fig.update_layout(template=PLOT_TEMPLATE, title="Wind rose comparison", height=max(420, 360 * rows), margin=dict(l=40, r=20, t=70, b=45))
+    fig.update_layout(template=PLOT_TEMPLATE, title="Wind rose comparison", height=max(540, (500 + 32 * max_lines) * rows),
+                      margin=dict(l=40, r=20, t=70, b=55), meta={"compass_polar": True})
     return fig
 
 
