@@ -258,10 +258,10 @@ def precipitation_figure_interpretation(df,fig,kind,*,column=P,title="",args=())
                 z=np.asarray(trace.z,dtype=float)
                 if z.ndim==2 and np.isfinite(z).any():
                     loc=np.unravel_index(np.nanargmax(z),z.shape)
-                    x=list(trace.x);y=list(trace.y)
+                    from .period_display import format_heatmap_cell
                     return (f"The greatest displayed {title.split(' · ')[0].lower() or 'precipitation'} "
                             f"heatmap value is {_fmt(z[loc])} {unit}, "
-                            f"at x={x[loc[1]]}, y={y[loc[0]]}. "+base)
+                            f"({format_heatmap_cell(fig, trace, loc, df)}). "+base)
     if kind in ("duration","duration curve"):
         v=_valid(df,column).dropna()
         if "wet intervals" in title.lower() and column==P:v=v.loc[v.gt(0)]
