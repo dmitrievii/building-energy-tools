@@ -240,7 +240,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
     if isinstance(f.layout.meta,dict) and CIRCULAR_LAYOUT in f.layout.meta:
         bars=[]
         for t in f.data:
-            if t.type!="barpolar" or t.visible in (False,"legendonly"):continue
+            if t.type not in ("barpolar","scatterpolar") or t.visible in (False,"legendonly"):continue
             if t.marker.coloraxis:
                 axis=getattr(f.layout,t.marker.coloraxis)
                 if axis.showscale is not False:bars.append(axis.colorbar)
