@@ -66,7 +66,7 @@ def zero_occurrence_kind(column):
     return (column in ZERO_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) is not None
             or bool(column in REFERENCES and REFERENCES[column].zero_label))
 
-NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes")
+NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes", "Ridgeline plot")
 
 
 def hourly_capable(df):
