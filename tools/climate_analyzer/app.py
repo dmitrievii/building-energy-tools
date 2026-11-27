@@ -6309,6 +6309,7 @@ def render_canonical_climate_analysis(dataset) -> None:
         "Humidity and Psychrometrics",
         "Wind and Ventilation",
         "Time Series and Overlay",
+        "Climate Anomalies",
         "Natural Ventilation",
         "HVAC and Passive Design",
     }
@@ -6445,6 +6446,9 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_precipitation(filtered_df, native_df=native_precipitation_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(filtered_df)
+    elif page == "Climate Anomalies":
+        from epw_climate_analyzer.anomaly_ui import panel
+        panel(st,filtered_df,full_df,render_plot)
     else:
         render_canonical_data_quality(dataset, filtered_df)
 
@@ -6456,7 +6460,7 @@ def render_generated_climate_analysis(dataset) -> None:
     from epw_climate_analyzer.engine_display import prepare_engine_display_frame
     from epw_climate_analyzer.epw_parser import EpwFile, EpwLocation
 
-    pages = [p for p in NAVIGATION_PAGES if p != "Compare Climates"]
+    pages = [p for p in NAVIGATION_PAGES if p not in ("Compare Climates","Climate Anomalies")]
     if st.session_state.get(NAVIGATION_KEY) not in pages:
         st.session_state[NAVIGATION_KEY] = "Overview"
     page = _sidebar_layout.render_navigation(st,pages,globals().get("_r219_nav_area"))
@@ -6732,6 +6736,9 @@ def main() -> None:
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(filtered_df)
+    elif page == "Climate Anomalies":
+        st.header("Climate anomalies")
+        st.info("A typical-year EPW represents a reference weather year. Load a multi-year historical observation archive to calculate historical climate anomalies.")
     elif page == "Natural Ventilation":
         render_natural_ventilation(filtered_df, pressure_pa=active_pressure,reference_df=full_df)
     elif page == "HVAC and Passive Design":
