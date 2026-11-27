@@ -4288,6 +4288,7 @@ def render_shading_design(df: pd.DataFrame) -> None:
     if has_energy:
         options.append("Irradiation reduction")
         options.append("Façade orientation comparison")
+        options.append("Geometry sensitivity")
     if all(c in df and df[c].notna().any() for c in ("solar_azimuth_deg","solar_apparent_zenith_deg")):
         options.append("Seasonal and hourly shading")
         options.append("Geometric shading mask")
@@ -4304,7 +4305,11 @@ def render_shading_design(df: pd.DataFrame) -> None:
         panel(df,render_plot,["solar"],key="r221_solar")
         return
     geometry=_shading_geometry("shading_analysis")
-    if view=="Irradiation reduction":
+    if view=="Geometry sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import geometry_panel
+        geometry_panel(df,render_plot,geometry=geometry,albedo=_active_solar_ground_albedo(df),key="r221_geometry")
+        _solar_ground_albedo_selection(df)
+    elif view=="Irradiation reduction":
         if "direct_normal_radiation_is_calculated" in df and df["direct_normal_radiation_is_calculated"].fillna(False).any():
             st.caption("DNI includes source-derived values calculated from GHI, DHI and solar zenith; measured GHI/DHI remain unchanged.")
         render_shading_analysis(df,_active_solar_ground_albedo(df),geometry=geometry)
