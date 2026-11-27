@@ -55,6 +55,36 @@ class EventCumulativeTests(unittest.TestCase):
         self.assertEqual(f.data[1].marker.symbol[0],"circle-open")
         self.assertIn("0.90 kWh/m²",note)
 
+    def test_cadence_rejects_multiple_samples_within_native_slot(self):
+        df=self.hourly().copy()
+        idx=list(df.index)
+        idx[2]=pd.Timestamp("2026-01-01 00:30")
+        df.index=pd.DatetimeIndex(idx)
+        with self.assertRaisesRegex(ValueError,"Irregular native observation cadence"):
+            monthly_accumulation(df,df[G])
+
+    def test_year_comparison_colours_and_paired_degree_styles(self):
+        from epw_climate_analyzer.chart_theme import HEATING_COLOR,COOLING_COLOR
+        df=self.hourly()
+        f,_=extensive_profile(df,G)
+        self.assertNotEqual(f.data[0].line.color,f.data[1].line.color)
+        f,_=degree_profile(df)
+        self.assertEqual(f.data[0].line.color,HEATING_COLOR)
+        self.assertEqual(f.data[1].line.color,HEATING_COLOR)
+        self.assertEqual(f.data[2].line.color,COOLING_COLOR)
+        self.assertNotEqual(f.data[0].line.dash,f.data[1].line.dash)
+
+    def test_half_hour_energy_not_multiplied_by_duration_again(self):
+        idx=pd.date_range("2026-02-01",periods=4,freq="30min")
+        df=pd.DataFrame({G:[100.,200.,300.,400.],T:[10.,10.,20.,20.],W:[7.,7.,7.,7.],"hour_of_day":idx.hour},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=30
+        f,_=extensive_profile(df,G)
+        self.assertAlmostEqual(f.data[0].y[1],1.)
+        f,_=ventilation_profile(df)
+        self.assertAlmostEqual(f.data[0].y[1],1.)
+        f,_=degree_profile(df)
+        self.assertAlmostEqual(f.data[0].y[1],10.)
+
     def test_native_monthly_totals_and_complete_marker(self):
         idx=pd.date_range("2026-01-01",periods=3,freq="MS")
         df=pd.DataFrame({"sunshine_duration_s":[360000.,720000.,1080000.]},index=idx)
