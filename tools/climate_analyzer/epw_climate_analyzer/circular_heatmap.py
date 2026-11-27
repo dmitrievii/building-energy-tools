@@ -3,7 +3,7 @@
 A barpolar annulus tile is exactly one finite canonical cell. Chronological
 grids must belong to one calendar year; pooled grids retain leap-neutral day
 slots. Missing cells and unselected periods remain empty, never compressed.
-Circular contour interpolation is deliberately excluded from this release.
+B2 adds masked contours in a separate geometry kernel.
 """
 from __future__ import annotations
 
@@ -120,8 +120,10 @@ def eligible(fig):
 
 def restore(fig):
     """Remove only our generated traces and restore original layout properties."""
+    from .circular_contours import STATUS
     meta=_meta(fig.layout)
     old=meta.pop(LAYOUT,None)
+    meta.pop(STATUS,None)
     if old is None:return fig
     fig.data=tuple(t for t in fig.data if not _meta(t).get(LAYER))
     for t in fig.data:
@@ -139,11 +141,37 @@ def restore(fig):
     return fig
 
 
-def apply(fig, arrangement=CALENDAR_ANGLE):
+def contour_eligible(fig, arrangement=CALENDAR_ANGLE):
+    from .heatmap_presentation import _eligible
+    from .circular_contours import prepare_grid, has_valid_quad
+    admitted=eligible(fig)
+    if admitted is None or _eligible(fig,admitted[0],check_grid=False) is None:return None
+    if not has_valid_quad(prepare_grid(admitted,_meta(fig.layout),arrangement)[2]):return None
+    return admitted
+
+
+def apply(fig, arrangement=CALENDAR_ANGLE, *, mode="Tiles", interval=0., labels=True, width=.25, contrast="Auto"):
     restore(fig)
     if arrangement not in ARRANGEMENTS:raise ValueError("Unknown circular calendar arrangement.")
     admitted=eligible(fig)
     if admitted is None:return fig
+    from .circular_contours import build_layers, STATUS
+    from .heatmap_presentation import _levels, CONTOUR_MIN_WIDTH, CONTOUR_MAX_WIDTH
+    layers=[]
+    status={"mode":"Tiles","requested":mode}
+    if mode in ("Contours","Tiles + contour lines"):
+        try:
+            if contour_eligible(fig,arrangement) is None:raise ValueError("The grid does not support continuous neighbouring-cell contours.")
+            from .heatmap_presentation import _scale
+            _,unit=_scale(fig,admitted[0])
+            finite=admitted[1][np.isfinite(admitted[1])]
+            levels=_levels(float(finite.min()),float(finite.max()),unit,interval)
+            if levels is None:raise ValueError("The requested contour interval exceeds the supported level count.")
+            layers,status=build_layers(fig,admitted,arrangement,mode=mode,levels=levels,labels=labels,
+                width=max(CONTOUR_MIN_WIDTH,min(CONTOUR_MAX_WIDTH,float(width))),contrast=contrast)
+            status["requested"]=mode
+        except (ValueError,ImportError) as exc:
+            status["reason"]=str(exc)
     t,z,h,period,(p,n,labels,year)=admitted
     rr,cc=np.where(np.isfinite(z))
     values=z[rr,cc]
@@ -211,7 +239,9 @@ def apply(fig, arrangement=CALENDAR_ANGLE):
     m[ORIGINAL]={"visible":t.visible,"meta":t.meta}
     t.meta=m
     t.visible=False
-    fig.add_trace(layer)
+    if status["mode"]!="Contours":fig.add_trace(layer)
+    for contour in layers:fig.add_trace(contour)
+    meta[STATUS]=status
     fig.update_layout(meta=meta,barmode="overlay",height=max(600,fig.layout.height or 0),
         polar=dict(barmode="overlay",angularaxis=dict(direction="clockwise",rotation=90,tickmode="array",
                                     tickvals=list(tickvals),ticktext=ticktext,showgrid=False),
