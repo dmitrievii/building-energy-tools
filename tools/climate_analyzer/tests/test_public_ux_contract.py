@@ -136,5 +136,20 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertEqual(missing.loc["Humidity ratio P05 / P95", "Value"], "n/a / n/a")
 
 
+    def test_calculated_wind_speed_reports_both_percentiles(self) -> None:
+        import pandas as pd
+        from epw_climate_analyzer.statistics import calculated_statistics_tables
+
+        df = pd.DataFrame(
+            {"wind_speed_m_s": [0.0, 1.0, 2.0, 3.0, 4.0, float("nan")]},
+            index=pd.date_range("2020-01-01", periods=6, freq="h"),
+        )
+        table = calculated_statistics_tables(df)["Wind"].set_index("Metric")
+        self.assertEqual(table.loc["Wind speed P05 / P95", "Value"], "0.2 / 3.8")
+        self.assertEqual(table.loc["Wind speed P05 / P95", "Unit"], "m/s")
+        missing = calculated_statistics_tables(df.assign(wind_speed_m_s=float("nan")))["Wind"].set_index("Metric")
+        self.assertEqual(missing.loc["Wind speed P05 / P95", "Value"], "n/a / n/a")
+
+
 if __name__ == "__main__":
     unittest.main()
