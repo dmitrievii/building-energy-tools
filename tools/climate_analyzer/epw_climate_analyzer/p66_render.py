@@ -111,6 +111,14 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")
         if a[0]=="wet":note+=" Positive precipitation intervals only."
+    elif k=="climate_anomaly":
+        from .climate_anomalies import figure
+        from .figure_interpretation_contract import bind_figure_interpretation
+        if reference_df is None:raise NotApplicable("A historical reference archive is required.")
+        try:f,note,_=figure(df,reference_df,c,a[0],a[1],a[2],year=a[3])
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
     elif k in ("threshold_sensitivity","shading_geometry_sensitivity"):
         from .threshold_sensitivity import SPECS,figure,shading_geometry_figure
         from .figure_interpretation_contract import bind_figure_interpretation
