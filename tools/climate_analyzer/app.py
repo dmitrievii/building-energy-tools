@@ -2574,6 +2574,7 @@ def render_comparison_basket_manager(active_file: ClimateFilePayload | None) -> 
     from epw_climate_analyzer.climate_sources import download_station_epw, filter_station_catalog
 
     st.subheader("Climate selection")
+    st.write("Compare several EPW climates using ranked metrics, overlays, small multiples and differences to a reference climate.")
     st.caption("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.")
 
     col_a, col_b, col_c = st.columns([1, 1, 1])
