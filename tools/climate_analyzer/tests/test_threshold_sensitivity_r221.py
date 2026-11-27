@@ -60,6 +60,24 @@ class ThresholdSensitivityTests(unittest.TestCase):
                     self.assertEqual(z[i,j],night_flushing_condition(frame,xx,yy).sum()*.5)
             self.assertGreater(den,0)
 
+    def test_night_difference_and_night_count_match_individual_observations(self):
+        from epw_climate_analyzer.decisions import night_flushing_reference
+        night,hot=night_flushing_reference(self.df)
+        t=self.df[T]
+        valid=night & hot.notna() & t.notna()
+        idx=self.df.index
+        anchors=idx.normalize().where(idx.hour>6,idx.normalize()-pd.DateOffset(days=1))
+        x=[0.,4.,8.];y=[16.,20.,24.]
+        hours,den=calculate(self.df,"night_delta",x,y)
+        nights,n_den=calculate(self.df,"night_delta",x,y,basis="nights")
+        self.assertEqual(den,valid.sum()*.5)
+        self.assertEqual(n_den,len(set(anchors[valid])))
+        for i,yy in enumerate(y):
+            for j,xx in enumerate(x):
+                mask=valid & ((hot-t)>=xx) & (t<=yy)
+                self.assertEqual(hours[i,j],mask.sum()*.5)
+                self.assertEqual(nights[i,j],len(set(anchors[mask])))
+
     def test_solar_and_economizer_match_single_threshold_masks(self):
         for kind,x,y in (("solar",[20.,24.,30.],[100.,250.,500.]),
                          ("economizer",[20.,24.,28.],[35.,50.,65.])):
