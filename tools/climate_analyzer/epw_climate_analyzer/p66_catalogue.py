@@ -280,7 +280,9 @@ def catalogue(df,context,coverage=FULL):
             if c not in ANOMALY_QUANTITIES or c not in df:continue
             q=ANOMALY_QUANTITIES[c]
             for view in (ANOMALY_VIEWS[2:] if coverage==REP else ANOMALY_VIEWS):
-                target_years=(years[-1:] if coverage!=FULL else years) if view in ANOMALY_VIEWS[:2] else (None,)
+                # One target-year example; complete history is represented by
+                # the interannual matrix and annual series at every coverage.
+                target_years=years[-1:] if view in ANOMALY_VIEWS[:2] else (None,)
                 for year in target_years:
                     suffix=f" · {year}" if year is not None else ""
                     add("Climate Anomalies",f"{q.label} · {view.lower()}{suffix} · reference {lo}–{hi}","climate_anomaly",c,q.anomaly_unit,(lo,hi,view,year))
