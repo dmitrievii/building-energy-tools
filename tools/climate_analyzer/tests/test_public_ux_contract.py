@@ -121,5 +121,20 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("reference_df=full_df", overview)
 
 
+    def test_calculated_humidity_ratio_reports_both_percentiles(self) -> None:
+        import pandas as pd
+        from epw_climate_analyzer.statistics import calculated_statistics_tables
+
+        df = pd.DataFrame(
+            {"humidity_ratio_g_kg": [1.0, 2.0, 3.0, 4.0, 5.0, float("nan")]},
+            index=pd.date_range("2020-01-01", periods=6, freq="h"),
+        )
+        table = calculated_statistics_tables(df)["Humidity and psychrometrics"].set_index("Metric")
+        self.assertEqual(table.loc["Humidity ratio P05 / P95", "Value"], "1.2 / 4.8")
+        self.assertEqual(table.loc["Humidity ratio P05 / P95", "Unit"], "g/kg dry air")
+        missing = calculated_statistics_tables(df.assign(humidity_ratio_g_kg=float("nan")))["Humidity and psychrometrics"].set_index("Metric")
+        self.assertEqual(missing.loc["Humidity ratio P05 / P95", "Value"], "n/a / n/a")
+
+
 if __name__ == "__main__":
     unittest.main()
