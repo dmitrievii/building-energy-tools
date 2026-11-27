@@ -257,5 +257,39 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn('max_value=CONTOUR_MAX_WIDTH, step=.25', controls)
 
 
+    def test_calendar_heatmap_interpretation_date_and_hour_intervals(self) -> None:
+        import pandas as pd
+        import plotly.graph_objects as go
+        from epw_climate_analyzer.period_display import format_heatmap_cell, format_hour_interval
+        from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+
+        single = pd.DataFrame({"dry_bulb_temperature_c": [0., 10.]},
+                              index=pd.to_datetime(["2026-01-04 07:00", "2026-01-04 23:00"]))
+        pooled = pd.concat([single, single.set_axis(single.index + pd.DateOffset(years=1))])
+
+        def cell(x, y, period, comparison, frame):
+            fig = go.Figure(go.Heatmap(x=[x], y=[y], z=[[1.]]))
+            fig.update_layout(xaxis_title=period, yaxis_title=comparison)
+            return format_heatmap_cell(fig, fig.data[0], (0, 0), frame)
+
+        self.assertEqual(format_hour_interval(0), "00:00–01:00")
+        self.assertEqual(format_hour_interval(23), "23:00–24:00")
+        self.assertEqual(cell("2026-01-04", 7, "Day", "Hour of day", single),
+                         "04.01.2026, 07:00–08:00")
+        self.assertEqual(cell(4, 7, "Day", "Hour of day", single), "04.01.2026, 07:00–08:00")
+        self.assertEqual(cell(4, 7, "Day", "Hour of day", pooled), "04.01, 07:00–08:00")
+        self.assertEqual(cell(61, 7, "Day", "Hour of day", single), "01.03.2026, 07:00–08:00")
+        self.assertEqual(cell(60, 2024, "Day", "Year", pooled), "29.02.2024")
+        self.assertEqual(cell("2026-W01", 7, "Week", "Hour of day", single),
+                         "Week 01, 2026, 07:00–08:00")
+        self.assertEqual(cell(1, 2026, "Month", "Year", pooled), "January 2026")
+        self.assertEqual(cell(1, 7, "Month", "Hour of day", pooled), "January, 07:00–08:00")
+        fig = go.Figure(go.Heatmap(x=["2026-01-04"], y=[7, 23], z=[[0.], [10.]]))
+        fig.update_layout(xaxis_title="Day", yaxis_title="Hour of day")
+        note = temperature_figure_interpretation(single, fig, "heatmap")
+        self.assertIn("04.01.2026, 07:00–08:00", note)
+        self.assertIn("04.01.2026, 23:00–24:00", note)
+
+
 if __name__ == "__main__":
     unittest.main()
