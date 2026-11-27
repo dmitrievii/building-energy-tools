@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
-from .chart_theme import metric_color, series_color
+from .chart_theme import metric_color, HEATING_COLOR, COOLING_COLOR, NV_COLOR, climate_color_map
 from .residual_findings import TOTAL_FIELDS, _numeric
 
 def _monthly_source(df):
@@ -39,11 +39,18 @@ def monthly_accumulation(df,values):
         if (g.size()>1).any():raise ValueError("Duplicate native monthly records.")
         coverage=counts.astype(float)
     else:
+        # Gaps may omit whole native slots but must never introduce additional
+        # observations within a slot. Check elapsed time in UTC for DST safety.
+        stamps=df.index.sort_values().as_unit("ns").asi8
+        interval_ns=int(round(dt*3600*1e9))
+        if interval_ns<=0 or np.any(np.diff(stamps)%interval_ns!=0):
+            raise ValueError("Irregular native observation cadence; inspect source data quality.")
         expected=[]
         for y,m in grid:
             start=pd.Timestamp(year=y,month=m,day=1,tz=v.index.tz)
             expected.append((start+pd.DateOffset(months=1)-start).total_seconds()/3600)
         coverage=counts*dt/np.asarray(expected)
+        if (coverage>1.+1e-8).any():raise ValueError("Valid observation duration exceeds calendar-month duration.")
     totals=g.sum(min_count=1).reindex(grid)
     cumulative=totals.groupby(level="year").cumsum(skipna=True)
     return pd.DataFrame({"monthly":totals,"cumulative":cumulative,"coverage":coverage},index=grid)
@@ -59,29 +66,40 @@ def profile_figure(df,contributions,*,title,unit,detail="",colors=None):
     if not tables:raise ValueError("No valid observed contributions remain.")
     years=sorted(set(df.index.year))
     summaries=[]
+    year_colors=climate_color_map([str(y) for y in years])
+    dashes=("solid","dash","dot","dashdot","longdash","longdashdot")
     for label,table in tables.items():
         for year in years:
             t=table.loc[year]
             if not t.monthly.notna().any():continue
             name=label if len(years)==1 else f"{label} · {year}"
-            color=(colors or {}).get(label,metric_color(label)) if len(years)==1 else series_color(name,title)
+            # Single-quantity historical comparisons distinguish calendar
+            # years by colour. Paired HGT/KGT retain their physical colours;
+            # year distinctions use dash styles instead.
+            color=(colors or {}).get(label,metric_color(label))
+            dash="solid"
+            if len(years)>1:
+                if len(tables)==1:color=year_colors[str(year)]
+                else:dash=dashes[years.index(year)%len(dashes)]
             complete=np.isclose(t.coverage,1.,atol=1e-8,rtol=0)
             custom=[[int(year),float(m) if pd.notna(m) else None,float(c)*100] for m,c in zip(t.monthly,t.coverage)]
             f.add_scatter(x=months,y=t.cumulative,mode="lines+markers",name=name,
-                connectgaps=False,line=dict(color=color),marker=dict(color=color,size=6,
+                connectgaps=False,line=dict(color=color,dash=dash),marker=dict(color=color,size=6,
                     symbol=["circle" if ok else "circle-open" for ok in complete]),
                 customdata=custom,hovertemplate="%{customdata[0]} · %{x}<br>Accumulated: %{y:,.2f} "+unit+
                 "<br>Monthly contribution: %{customdata[1]:,.2f}<br>Calendar coverage: %{customdata[2]:.1f}%<extra></extra>")
             summaries.append((name,float(t.monthly.sum()),int(t.monthly.notna().sum()),int(complete.sum())))
-    f.update_layout(title=title,template="plotly_white",xaxis_title="Calendar month",
+    f.update_layout(title=title,template="plotly_white",xaxis_title="End of calendar month",
         yaxis_title=f"Cumulative observed contribution [{unit}]",legend=dict(orientation="h",y=-.2),
         meta={"layout_kind":"cumulative_resource","source_scope":"observed year-to-date"})
     low=min(summaries,key=lambda a:a[1]);high=max(summaries,key=lambda a:a[1])
-    note=(f"Each curve accumulates the observed monthly contributions within its own calendar year, resetting at January. "
+    note=(f"Each curve accumulates observed monthly contributions from the start of its own calendar year; points show month-end totals. "
           f"The final observed totals range from {low[1]:,.2f} {unit} ({low[0]}) to {high[1]:,.2f} {unit} ({high[0]}). "
           "Missing months appear as gaps; open markers identify partially covered months. "
           "Later cumulative values retain earlier observed contributions, while excluded or missing observations contribute no estimated amount. "
           "A partial-year curve describes the selected observation scope. ")
+    from .temporal_filtering import time_basis,CALENDAR_PROFILE
+    if time_basis(df)==CALENDAR_PROFILE:note+="Each calendar year is kept separate rather than pooling equivalent months. "
     if _monthly_source(df):note+="Native monthly coverage counts published valid monthly records. "
     if detail:note+=detail
     return f,note
@@ -106,7 +124,7 @@ def degree_profile(df,*,heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_
     h,c=_degree_contributions(t,**args)
     return profile_figure(df,{"Heating degree-hours (HGT)":h*dt,"Cooling degree-hours (KGT)":c*dt},
         title=f"Cumulative degree-hours · HGT {heating_indoor_c:g}/{heating_limit_c:g}; KGT {cooling_indoor_c:g}/{cooling_limit_c:g}",
-        unit="K·h",detail="The existing two-temperature HGT/KGT selection and signed differences are retained; KGT may decrease when the cooling limit lies below the indoor reference.")
+        unit="K·h",colors={"Heating degree-hours (HGT)":HEATING_COLOR,"Cooling degree-hours (KGT)":COOLING_COLOR},detail="The existing two-temperature HGT/KGT selection and signed differences are retained; KGT may decrease when the cooling limit lies below the indoor reference.")
 
 def ventilation_profile(df,*,fixed=None):
     from .decisions import natural_ventilation_condition
@@ -118,4 +136,4 @@ def ventilation_profile(df,*,fixed=None):
     mask=natural_ventilation_condition(df,**args)
     v=eligibility_mask(df,mask,wind=wind)*dt
     return profile_figure(df,{"Natural ventilation suitable hours":v},title="Natural ventilation · cumulative suitable hours",
-        unit="h",detail=f"Active screen: outdoor temperature {args.get('t_min_c',16.):g}–{args.get('t_max_c',26.):g} °C, humidity ratio ≤ {args.get('d_max_g_kg',9.):g} g/kg; active wind and occupancy conditions remain in the eligibility mask.")
+        unit="h",colors={"Natural ventilation suitable hours":NV_COLOR},detail=f"Active screen: outdoor temperature {args.get('t_min_c',16.):g}–{args.get('t_max_c',26.):g} °C, humidity ratio ≤ {args.get('d_max_g_kg',9.):g} g/kg; active wind and occupancy conditions remain in the eligibility mask.")
