@@ -5381,7 +5381,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
         night_mask = night_flushing_condition(df,day_hot_threshold_c=hot,night_max_c=cool)
         if view=="Threshold sensitivity":
             from epw_climate_analyzer.sensitivity_ui import panel
-            panel(df,render_plot,["night"],key="r221_night",references={"night":(hot,cool)})
+            panel(df,render_plot,["night","night_delta"],key="r221_night",references={"night":(hot,cool),"night_delta":(max(0.,hot-cool),cool)})
         elif view=="Nightly persistence":
             days=pd.DatetimeIndex(df.index).normalize()
             anchor=days.where(df.index.hour>6,days-pd.DateOffset(days=1))
