@@ -486,6 +486,7 @@ try {
   await page.goto(TARGET_URL+'?circular=1',{waitUntil:'domcontentloaded'});
   const circularFrame=await appFrame(page,'Circular calendar geometry harness');
   await circularFrame.getByText('Circular',{exact:true}).click();
+  await circularFrame.getByText('Tiles',{exact:true}).click();
   async function circularMetrics(arrangement) {
     await circularFrame.waitForFunction(({arrangement})=>{
       const node=document.querySelector('.js-plotly-plot');
@@ -515,6 +516,49 @@ try {
     if(!m.canonicalHidden||m.domain[0]!==0||m.domain[1]!==8759||m.axisDirection!=='clockwise')
       throw new Error('Circular canonical colour/geometry contract failed: '+JSON.stringify(m));
   }
+  // Both circular modes use the same physical colour domain. Verify real
+  // SVG fill and line paths, not just Python-side trace presence.
+  async function contourMetrics(mode, arrangement) {
+    await circularFrame.getByText(mode,{exact:true}).click();
+    await circularFrame.waitForFunction(({mode,arrangement})=>{
+      const node=document.querySelector('.js-plotly-plot');
+      const status=node?._fullLayout?.meta?.ige_circular_contour_status;
+      const data=node?._fullData||[];
+      const line=data.find(t=>t.meta?.circular_contour_lines);
+      const bands=data.filter(t=>t.meta?.circular_contour_band);
+      const ticks=node?._fullLayout?.polar?.angularaxis?.ticktext||[];
+      return status?.mode===mode&&line&&
+        (arrangement==='Calendar angle'?ticks.includes('Jan'):ticks.includes('00:00'))&&
+        node.querySelectorAll('.polarlayer .js-line').length>0&&
+        (mode!=='Contours'||(bands.length>0&&node.querySelectorAll('.polarlayer .js-fill').length>0));
+    },{mode,arrangement},{timeout:90000});
+    return circularFrame.locator('.js-plotly-plot').first().evaluate(node=>{
+      const data=node._fullData;
+      return {status:node._fullLayout.meta.ige_circular_contour_status,
+        bands:data.filter(t=>t.meta?.circular_contour_band).length,
+        tiles:data.filter(t=>t.type==='barpolar').length,
+        width:data.find(t=>t.meta?.circular_contour_lines).line.width,
+        fills:node.querySelectorAll('.polarlayer .js-fill').length,
+        fillRules:Array.from(node.querySelectorAll('.polarlayer .js-fill')).map(p=>getComputedStyle(p).fillRule),
+        bounds:[node._fullLayout.coloraxis.cmin,node._fullLayout.coloraxis.cmax]};
+    });
+  }
+  const clockHybrid=await contourMetrics('Tiles + contour lines','Clock-hour angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/16-circular-clock-hybrid.png'});
+  const clockContours=await contourMetrics('Contours','Clock-hour angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/17-circular-clock-contours.png'});
+  await circularFrame.getByText('Calendar angle',{exact:true}).click();
+  const calendarHybrid=await contourMetrics('Tiles + contour lines','Calendar angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/18-circular-calendar-hybrid.png'});
+  const calendarContours=await contourMetrics('Contours','Calendar angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/19-circular-calendar-contours.png'});
+  for(const m of [clockHybrid,clockContours,calendarHybrid,calendarContours]){
+    if(m.bounds[0]!==0||m.bounds[1]!==8759||m.width!==.25||m.status.periodic||
+       (m.status.mode==='Contours'?(m.tiles!==0||m.fills<1||m.fillRules.some(v=>v!=='nonzero')):m.tiles!==1))
+       throw new Error('Circular contour visual contract failed: '+JSON.stringify(m));
+  }
+  report.metrics.circularContours={clockHybrid,clockContours,calendarHybrid,calendarContours};
+  report.checks.circularContours=true;
   await circularFrame.getByText('Cartesian',{exact:true}).click();
   await circularFrame.waitForFunction(()=>{
     const d=document.querySelector('.js-plotly-plot')?._fullData;
