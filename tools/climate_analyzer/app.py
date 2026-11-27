@@ -2686,13 +2686,12 @@ def comparison_controls(climates: list[ClimateDataset]) -> tuple[str, str, list[
         state["comparison_display_mode"] = mode
     if "comparison_month_names" not in state:
         state["comparison_month_names"] = [m for m in saved.get("months", list(MONTHS)) if m in MONTHS]
-    if "comparison_hour_range" not in state:
-        state["comparison_hour_range"] = tuple(saved.get("hour_range", (0, 23)))
     c1, c2, c3 = st.columns([1, 1, 2])
     reference = c1.selectbox("Reference climate", climate_names, key="comparison_reference")
     display_mode = c2.selectbox("Display mode", modes, key="comparison_display_mode")
     selected_month_names = c3.multiselect("Comparison months", list(MONTHS), key="comparison_month_names")
-    hour_range = st.slider("Comparison hour range", min_value=0, max_value=23, key="comparison_hour_range")
+    hour_range = st.slider("Comparison hour range", min_value=0, max_value=23,
+                           value=tuple(saved.get("hour_range", (0, 23))), key="comparison_hour_range")
     state["_comparison_control_preferences"] = {
         "reference": reference, "display_mode": display_mode,
         "months": list(selected_month_names), "hour_range": tuple(hour_range),
