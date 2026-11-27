@@ -111,6 +111,16 @@ section[data-testid="stSidebar"] .st-key-_r220_page_Humidity_and_Psychrometrics 
 section[data-testid="stSidebar"] .st-key-_r220_page_Precipitation_and_Snow [data-testid="stIconMaterial"] {color:#2563EB}
 section[data-testid="stSidebar"] .st-key-_r220_page_Wind_and_Ventilation [data-testid="stIconMaterial"],
 section[data-testid="stSidebar"] .st-key-_r220_page_Natural_Ventilation [data-testid="stIconMaterial"] {color:#059669}
+/* Custom casement-window glyph. Retain the native Material window icon
+   as a fallback and replace its visual shape only in mask-capable browsers.
+   The native button, label, focus and click callback remain unchanged. */
+@supports (mask-image: url("")) {
+    section[data-testid="stSidebar"] .st-key-_r220_page_Natural_Ventilation [data-testid="stIconMaterial"] {
+        color:transparent!important; background-color:#059669;
+        flex:0 0 1.25rem; width:1.25rem; height:1.25rem;
+        mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Cpath%20d%3D%22M5%204H43V44H5Z%20M24%204L36%2012V36L24%2044Z%20M24%204V44%20M5%2024H24%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222.8%22%20stroke-linejoin%3D%22round%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+    }
+}
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button[data-testid="stBaseButton-primary"],
 section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button[data-testid="stBaseButton-primary"],
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button[data-testid="stBaseButton-primary"] {
