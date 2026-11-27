@@ -111,5 +111,15 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("source=epw.name", source)
 
 
+    def test_overview_uses_global_filter_without_secondary_scope(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        overview = source.split("def render_overview(", 1)[1].split("def render_temperature(", 1)[0]
+        self.assertNotIn("Statistics scope", overview)
+        self.assertNotIn("Current sidebar filter", overview)
+        self.assertIn("metric_cards(df)", overview)
+        self.assertIn("render_calculated_epw_statistics(df)", overview)
+        self.assertIn("reference_df=full_df", overview)
+
+
 if __name__ == "__main__":
     unittest.main()
