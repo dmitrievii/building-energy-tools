@@ -33,7 +33,7 @@ ICONS={
     "Solar and Radiation":"wb_sunny","Wind and Ventilation":"air",
     "Sky and Daylight":"partly_cloudy_day","Precipitation and Snow":"rainy",
     "Time Series and Overlay":"show_chart","Compare Climates":"compare_arrows",
-    "Data Quality":"database","Natural Ventilation":"air","Shading analysis":"wb_twilight",
+    "Data Quality":"database","Natural Ventilation":"window","Shading analysis":"wb_twilight",
     "HVAC and Passive Design":"home","Outdoor Thermal Comfort":"device_thermostat",
 }
 LABELS={"Humidity and Psychrometrics":"Humidity & psychrometrics",
@@ -55,13 +55,52 @@ section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button,
 section[data-testid="stSidebar"] .st-key-_r219_service_button button {
-    justify-content:flex-start; text-align:left; min-height:2rem;
+    display:flex!important; align-items:center!important;
+    justify-content:flex-start!important; text-align:left!important; min-height:2rem;
     padding:.3rem .55rem; border:0!important; box-shadow:none!important;
     color:inherit!important; border-radius:.35rem; background:transparent!important;
     font-weight:400;
 }
+/* Streamlit renders button labels in nested markdown containers. Align
+   the label itself, not only the outer flex row. */
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree button [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] .st-key-_r219_service_button button [data-testid="stMarkdownContainer"] {
+    flex:1 1 auto; min-width:0; text-align:left!important;
+}
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree button p,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button p {
+    text-align:left!important; margin:0;
+}
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button {
-    padding-left:1.55rem; font-size:.92rem;
+    padding-left:1.25rem; font-size:.92rem;
+}
+/* Use the same flat row language for native settings expanders while
+   retaining their mounted controls and native keyboard accessibility. */
+section[data-testid="stSidebar"] [data-testid="stExpander"] details {
+    border:0!important; box-shadow:none!important; border-radius:.35rem;
+    background:transparent!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+    min-height:2rem; padding:.3rem .55rem!important;
+    justify-content:flex-start!important; text-align:left!important;
+    border-radius:.35rem; background:transparent!important;
+    color:inherit!important; font-weight:400;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"],
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+    text-align:left!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {
+    background:color-mix(in srgb,currentColor 6%,transparent)!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary:focus-visible {
+    outline:2px solid currentColor!important; outline-offset:1px;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] details[open] > summary {
+    background:color-mix(in srgb,currentColor 9%,transparent)!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpanderDetails"] {
+    border-top:0!important;
 }
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button {
     font-weight:550;
@@ -72,6 +111,16 @@ section[data-testid="stSidebar"] .st-key-_r220_page_Humidity_and_Psychrometrics 
 section[data-testid="stSidebar"] .st-key-_r220_page_Precipitation_and_Snow [data-testid="stIconMaterial"] {color:#2563EB}
 section[data-testid="stSidebar"] .st-key-_r220_page_Wind_and_Ventilation [data-testid="stIconMaterial"],
 section[data-testid="stSidebar"] .st-key-_r220_page_Natural_Ventilation [data-testid="stIconMaterial"] {color:#059669}
+/* Custom casement-window glyph. Retain the native Material window icon
+   as a fallback and replace its visual shape only in mask-capable browsers.
+   The native button, label, focus and click callback remain unchanged. */
+@supports (mask-image: url("")) {
+    section[data-testid="stSidebar"] .st-key-_r220_page_Natural_Ventilation [data-testid="stIconMaterial"] {
+        color:transparent!important; background-color:#059669;
+        flex:0 0 1.25rem; width:1.25rem; height:1.25rem;
+        mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Cpath%20d%3D%22M5%204H43V44H5Z%20M24%204L36%2012V36L24%2044Z%20M24%204V44%20M5%2024H24%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222.8%22%20stroke-linejoin%3D%22round%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+    }
+}
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button[data-testid="stBaseButton-primary"],
 section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button[data-testid="stBaseButton-primary"],
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button[data-testid="stBaseButton-primary"] {
@@ -162,8 +211,8 @@ def render_service(st,area,render_memory):
     st.header("Service & Diagnostics")
     st.button("Back to analysis",key="_r219_service_back",on_click=toggle)
     from .runtime_identity import RUNTIME_BUILD_ID
-    from .release_info import TOOL_VERSION
-    st.caption(f"Climate Analyzer {TOOL_VERSION} · runtime {RUNTIME_BUILD_ID[:12]}")
+    from .ui_contract import APP_RELEASE_LABEL
+    st.caption(f"{APP_RELEASE_LABEL} · runtime {RUNTIME_BUILD_ID[:12]}")
     render_memory(st)
     return True
 

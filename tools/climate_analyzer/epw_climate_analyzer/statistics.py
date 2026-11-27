@@ -177,7 +177,7 @@ def calculated_statistics_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
             MetricDefinition("Humidity and psychrometrics", "Mean relative humidity", _fmt_number(_safe_mean(df, "relative_humidity_pct")), "%", "Average outdoor relative humidity."),
             MetricDefinition("Humidity and psychrometrics", "Relative humidity P05 / P95", f"{_fmt_number(_safe_quantile(df, 'relative_humidity_pct', 0.05))} / {_fmt_number(_safe_quantile(df, 'relative_humidity_pct', 0.95))}", "%", "Humidity range excluding the most extreme 10% of hours."),
             MetricDefinition("Humidity and psychrometrics", "Mean humidity ratio", _fmt_number(_safe_mean(df, "humidity_ratio_g_kg")), "g/kg dry air", "Psychrometric moisture content calculated from EPW temperature, RH and pressure."),
-            MetricDefinition("Humidity and psychrometrics", "Humidity ratio P95", _fmt_number(_safe_quantile(df, "humidity_ratio_g_kg", 0.95)), "g/kg dry air", "Useful indicator for latent-load and dehumidification screening."),
+            MetricDefinition("Humidity and psychrometrics", "Humidity ratio P05 / P95", f"{_fmt_number(_safe_quantile(df, 'humidity_ratio_g_kg', 0.05))} / {_fmt_number(_safe_quantile(df, 'humidity_ratio_g_kg', 0.95))}", "g/kg dry air", "Lower and upper moisture-content percentiles for humidification and dehumidification screening."),
             MetricDefinition("Humidity and psychrometrics", "Maximum dew-point temperature", _fmt_number(_safe_max(df, "dew_point_temperature_c")), "°C", f"Timestamp: {_timestamp_at_extreme(df, 'dew_point_temperature_c', 'max')}."),
             MetricDefinition("Humidity and psychrometrics", "Maximum wet-bulb temperature", _fmt_number(_safe_max(df, "wet_bulb_temperature_c")), "°C", "Relevant for evaporative cooling and heat-rejection concepts."),
             MetricDefinition("Humidity and psychrometrics", "Moist-air enthalpy P95", _fmt_number(_safe_quantile(df, "moist_air_enthalpy_kj_kg", 0.95)), "kJ/kg dry air", "Outdoor-air total heat indicator for economizer and cooling analysis."),
@@ -196,7 +196,7 @@ def calculated_statistics_tables(df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         ],
         "Wind": [
             MetricDefinition("Wind", "Mean wind speed", _fmt_number(_safe_mean(df, "wind_speed_m_s")), "m/s", "Average wind speed from EPW."),
-            MetricDefinition("Wind", "Wind speed P95", _fmt_number(_safe_quantile(df, "wind_speed_m_s", 0.95)), "m/s", "High but non-maximum wind-speed indicator."),
+            MetricDefinition("Wind", "Wind speed P05 / P95", f"{_fmt_number(_safe_quantile(df, 'wind_speed_m_s', 0.05))} / {_fmt_number(_safe_quantile(df, 'wind_speed_m_s', 0.95))}", "m/s", "Lower and upper wind-speed percentiles for assessing low-wind conditions and high-wind exposure."),
             MetricDefinition("Wind", "Maximum wind speed", _fmt_number(_safe_max(df, "wind_speed_m_s")), "m/s", f"Timestamp: {_timestamp_at_extreme(df, 'wind_speed_m_s', 'max')}."),
             MetricDefinition("Wind", "Calm hours below 1 m/s", f"{_count(df, df['wind_speed_m_s'] < 1.0):,}" if "wind_speed_m_s" in df else "n/a", "h", "Low wind-speed hours; relevant for natural ventilation and outdoor comfort."),
             MetricDefinition("Wind", "Strong-wind hours above 8 m/s", f"{_count(df, df['wind_speed_m_s'] > 8.0):,}" if "wind_speed_m_s" in df else "n/a", "h", "Potential wind discomfort or façade-exposure periods."),

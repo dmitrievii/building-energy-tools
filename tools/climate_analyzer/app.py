@@ -79,7 +79,6 @@ from epw_climate_analyzer.ui_contract import (
     APP_INDEPENDENCE_NOTICE,
     APP_INTRO,
     APP_NAME,
-    APP_RELEASE_LABEL,
     APP_TAGLINE,
     NAVIGATION_KEY,
     NAVIGATION_PAGES,
@@ -1637,10 +1636,12 @@ def render_climate_file_source() -> None:
     st.title(APP_NAME)
     st.markdown(f"#### {APP_TAGLINE}")
     st.write(APP_INTRO)
+    from epw_climate_analyzer.about_content import ABOUT_MARKDOWN
     with st.expander("About", expanded=False):
-        st.write(APP_RELEASE_LABEL)
+        st.markdown(ABOUT_MARKDOWN)
+    with st.expander("Legal notice", expanded=False):
         st.write(APP_ENGINEERING_DISCLAIMER)
-        st.caption(APP_INDEPENDENCE_NOTICE)
+        st.write(APP_INDEPENDENCE_NOTICE)
     st.write(
         "Start with an EPW weather file, select a reviewed Climate.OneBuilding climate, or load measured "
         "historical station observations from GeoSphere Austria, or generate a research climate year. No building model is required."
@@ -1680,7 +1681,6 @@ def render_climate_file_source() -> None:
         st.write("Use an EnergyPlus Weather (EPW) file that you already have. The file is processed for the current session.")
         local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload"+st.session_state.get("_mem_r12_reset_epoch",""))
         if local_file is not None:
-            st.write(f"Selected file: `{local_file.name}`")
             if st.button("Analyze this EPW", type="primary"):
                 set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
                 st.rerun()
@@ -2573,7 +2573,8 @@ def render_comparison_basket_manager(active_file: ClimateFilePayload | None) -> 
     from epw_climate_analyzer.catalog_runtime import catalog_runtime_summary, station_provenance_text
     from epw_climate_analyzer.climate_sources import download_station_epw, filter_station_catalog
 
-    st.subheader("Comparison basket")
+    st.subheader("Climate selection")
+    st.write("Compare several EPW climates using ranked metrics, overlays, small multiples and differences to a reference climate.")
     st.caption("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.")
 
     col_a, col_b, col_c = st.columns([1, 1, 1])
@@ -2582,7 +2583,7 @@ def render_comparison_basket_manager(active_file: ClimateFilePayload | None) -> 
             add_to_comparison_basket(active_file.name, active_file.payload, active_file.source, active_file.name)
             st.rerun()
     with col_b:
-        if st.button("Clear comparison basket", type="secondary"):
+        if st.button("Remove all climates", type="secondary"):
             clear_comparison_basket()
             st.rerun()
     with col_c:
@@ -2644,7 +2645,7 @@ def render_comparison_basket_manager(active_file: ClimateFilePayload | None) -> 
 
     payloads = get_comparison_payloads()
     if payloads:
-        st.markdown("#### Basket contents")
+        st.markdown("#### Selected climates")
         for item in payloads:
             cols = st.columns([3, 4, 1])
             current_name = str(item.get("display_name", item.get("name", "Climate")))
@@ -2669,11 +2670,33 @@ def filter_comparison_climates(climates: list[ClimateDataset], months: list[int]
 def comparison_controls(climates: list[ClimateDataset]) -> tuple[str, str, list[int], list[int]]:
     """Render common comparison controls and return reference, mode, months and hours."""
     climate_names = [climate.display_name for climate in climates]
+    modes = ["Auto", "Overlay", "Small multiples", "Difference to reference", "Ranked summary"]
+    state = st.session_state
+    # Widget state can be cleaned when the management tab is active.
+    # Preserve only the small shared comparison preferences, never climate frames.
+    saved = state.get("_comparison_control_preferences", {})
+    reference = saved.get("reference", climate_names[0])
+    if reference not in climate_names:
+        reference = climate_names[0]
+    mode = saved.get("display_mode", "Auto")
+    if mode not in modes:
+        mode = "Auto"
+    if state.get("comparison_reference") not in climate_names:
+        state["comparison_reference"] = reference
+    if state.get("comparison_display_mode") not in modes:
+        state["comparison_display_mode"] = mode
+    if "comparison_month_names" not in state:
+        state["comparison_month_names"] = [m for m in saved.get("months", list(MONTHS)) if m in MONTHS]
     c1, c2, c3 = st.columns([1, 1, 2])
-    reference = c1.selectbox("Reference climate", climate_names, index=0)
-    display_mode = c2.selectbox("Display mode", ["Auto", "Overlay", "Small multiples", "Difference to reference", "Ranked summary"], index=0)
-    selected_month_names = c3.multiselect("Comparison months", list(MONTHS.keys()), default=list(MONTHS.keys()))
-    hour_range = st.slider("Comparison hour range", min_value=0, max_value=23, value=(0, 23), key="comparison_hour_range")
+    reference = c1.selectbox("Reference climate", climate_names, key="comparison_reference")
+    display_mode = c2.selectbox("Display mode", modes, key="comparison_display_mode")
+    selected_month_names = c3.multiselect("Comparison months", list(MONTHS), key="comparison_month_names")
+    hour_range = st.slider("Comparison hour range", min_value=0, max_value=23,
+                           value=tuple(saved.get("hour_range", (0, 23))), key="comparison_hour_range")
+    state["_comparison_control_preferences"] = {
+        "reference": reference, "display_mode": display_mode,
+        "months": list(selected_month_names), "hour_range": tuple(hour_range),
+    }
     months = [MONTHS[m] for m in selected_month_names]
     hours = list(range(hour_range[0], hour_range[1] + 1))
     return reference, display_mode, months, hours
@@ -2702,12 +2725,14 @@ def render_compare_summary(climates: list[ClimateDataset], reference_name: str) 
         mime="text/csv",
     )
     numeric_columns = [col for col in metrics.columns if pd.api.types.is_numeric_dtype(metrics[col])]
-    default_metric = "HDD18 [K·h]" if "HDD18 [K·h]" in numeric_columns else numeric_columns[0]
+    if not numeric_columns:
+        st.info("No numeric comparison metrics are available.")
+        return
+    default_metric = "Annual mean T [°C]" if "Annual mean T [°C]" in numeric_columns else numeric_columns[0]
     metric = st.selectbox("Ranked metric", numeric_columns, index=numeric_columns.index(default_metric))
+    from epw_climate_analyzer.comparison import ranked_metric_interpretation
     fig = ranked_metric_chart(metrics, metric)
-    render_plot(fig, comparison_interpretation(metrics, reference_name))
-    fig2 = hdd_cdd_grouped_chart(metrics)
-    render_plot(fig2, comparison_interpretation(metrics, reference_name))
+    render_plot(fig, ranked_metric_interpretation(metrics, metric, reference_name))
 
 
 def render_compare_temperature(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
@@ -3115,61 +3140,66 @@ def render_compare_data_quality(climates: list[ClimateDataset], reference_name: 
 
 
 def render_compare_climates(active_file: ClimateFilePayload | None, pressure_mode: str, custom_pressure_pa: float | None, active_pressure: float) -> None:
-    """Render the complete multi-climate comparison UI."""
+    """Render the selected comparison sub-tab, loading only its required data."""
     st.header("Compare climates")
-    st.write(
-        "Compare several EPW climates with overlay, small-multiple, ranked and difference-to-reference modes. "
-        "All calculations use only EPW hourly data and EPW-derived indicators."
-    )
-    render_comparison_basket_manager(active_file)
-
     payloads = get_comparison_payloads()
-    if len(payloads) < 2:
-        st.warning("Add at least two EPW climates to enable comparison charts.")
+    labels = [
+        "Manage climates",
+        "Summary",
+        "Temperature",
+        "Humidity / Psychrometrics",
+        "Solar",
+        "Wind",
+        "Natural ventilation",
+        "Passive / HVAC",
+        "Difference to reference",
+        "Data quality",
+    ]
+    tabs = st.tabs(labels, key="comparison_active_tab", on_change="rerun",
+                   default="Manage climates" if len(payloads) < 2 else "Summary")
+    if tabs[0].open:
+        with tabs[0]:
+            render_comparison_basket_manager(active_file)
         return
 
-    climates = load_comparison_datasets(payloads, pressure_mode, custom_pressure_pa)
-    if len(climates) < 2:
-        st.warning("At least two valid climates are required after loading.")
+    active_index = next((i for i, tab in enumerate(tabs) if tab.open), None)
+    if active_index is None:
         return
+    with tabs[active_index]:
+        if len(payloads) < 2:
+            st.info("Add at least two EPW climates under Manage climates.")
+            return
+        climates = load_comparison_datasets(payloads, pressure_mode, custom_pressure_pa)
+        if len(climates) < 2:
+            st.warning("At least two valid climates are required after loading. Review Manage climates.")
+            return
 
-    reference_name, display_mode, months, hours = comparison_controls(climates)
-    climates = filter_comparison_climates(climates, months=months, hours=hours)
-    if any(climate.data.empty for climate in climates):
-        st.warning("The current comparison filters remove all data for at least one climate. Adjust the month or hour filter.")
-        return
+        st.caption(f"Comparing {len(climates)} climates")
+        reference_name, display_mode, months, hours = comparison_controls(climates)
+        climates = filter_comparison_climates(climates, months=months, hours=hours)
+        if any(climate.data.empty for climate in climates):
+            st.warning("The current comparison filters remove all data for at least one climate. Adjust the month or hour filter.")
+            return
 
-    tabs = st.tabs(
-        [
-            "Summary",
-            "Temperature",
-            "Humidity / Psychrometrics",
-            "Solar",
-            "Wind",
-            "Natural ventilation",
-            "Passive / HVAC",
-            "Difference to reference",
-            "Data quality",
-        ]
-    )
-    with tabs[0]:
-        render_compare_summary(climates, reference_name)
-    with tabs[1]:
-        render_compare_temperature(climates, reference_name, display_mode)
-    with tabs[2]:
-        render_compare_humidity(climates, reference_name, display_mode)
-    with tabs[3]:
-        render_compare_solar(climates, reference_name, display_mode)
-    with tabs[4]:
-        render_compare_wind(climates, reference_name, display_mode)
-    with tabs[5]:
-        render_compare_natural_ventilation(climates, reference_name, display_mode)
-    with tabs[6]:
-        render_compare_passive_hvac(climates, reference_name, display_mode)
-    with tabs[7]:
-        render_compare_difference(climates, reference_name)
-    with tabs[8]:
-        render_compare_data_quality(climates, reference_name)
+        if active_index == 1:
+            render_compare_summary(climates, reference_name)
+        elif active_index == 2:
+            render_compare_temperature(climates, reference_name, display_mode)
+        elif active_index == 3:
+            render_compare_humidity(climates, reference_name, display_mode)
+        elif active_index == 4:
+            render_compare_solar(climates, reference_name, display_mode)
+        elif active_index == 5:
+            render_compare_wind(climates, reference_name, display_mode)
+        elif active_index == 6:
+            render_compare_natural_ventilation(climates, reference_name, display_mode)
+        elif active_index == 7:
+            render_compare_passive_hvac(climates, reference_name, display_mode)
+        elif active_index == 8:
+            render_compare_difference(climates, reference_name)
+        elif active_index == 9:
+            render_compare_data_quality(climates, reference_name)
+
 
 def render_calculated_epw_statistics(df: pd.DataFrame) -> None:
     """Render calculated EPW-derived statistics inside the Overview page.
@@ -3264,9 +3294,8 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
         return
     st.header("EPW Climate Analyzer")
     st.write("Interactive climate-analysis dashboard for architecture and HVAC decision support.")
-    statistics_scope = st.radio("Statistics scope", ["Full EPW file", "Current sidebar filter"], horizontal=True)
-    stats_df = full_df if statistics_scope == "Full EPW file" else df
-    metric_cards(stats_df)
+    # Overview follows the same global data selection as every analysis page.
+    metric_cards(df)
 
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -3288,7 +3317,7 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
             """
         )
 
-    render_calculated_epw_statistics(stats_df)
+    render_calculated_epw_statistics(df)
 
     issue_count = len(issues)
     error_count = sum(1 for issue in issues if getattr(issue, "severity", "") == "error")
@@ -6617,10 +6646,10 @@ def main() -> None:
 
     climate_area=globals().get("_r219_climate_area",st.sidebar)
     climate_area.write(f"**{epw.location.city}, {epw.location.country}**")
-    climate_area.caption(epw.name)
     if page=="Data Quality":
         st.caption(f"Rows in current view: {len(filtered_df):,} of {len(full_df):,}")
         with st.expander("Data provenance", expanded=False):
+            st.caption(f"Source file: {epw.name}")
             st.caption(active_file.source)
             if pressure_mode == "EPW station pressure with fallback median":
                 st.caption(f"Pressure: hourly EPW station values; fallback median {active_pressure:,.0f} Pa")
