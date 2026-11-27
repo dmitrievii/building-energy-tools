@@ -130,6 +130,14 @@ def format_heatmap_cell(fig, trace, position, df=None):
             if match and 1 <= int(match.group(2)) <= 12:
                 month_year = match.group(1) or year
                 label = calendar.month_name[int(match.group(2))] + (f" {month_year}" if month_year else "")
+            else:
+                month_numbers = {
+                    name.lower(): n for n in range(1, 13)
+                    for name in (calendar.month_name[n], calendar.month_abbr[n])
+                }
+                month = month_numbers.get(label.strip().lower())
+                if month is not None:
+                    label = calendar.month_name[month] + (f" {year}" if year else "")
         else:
             return f"{period or 'x'}: {x}; {comparison or 'y'}: {y}"
     except (ValueError, TypeError, OverflowError):
