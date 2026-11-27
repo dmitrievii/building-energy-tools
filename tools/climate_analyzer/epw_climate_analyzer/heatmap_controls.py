@@ -11,7 +11,7 @@ from .heatmap_presentation import (
     CONTOUR_MIN_WIDTH, CONTOUR_DEFAULT_WIDTH, CONTOUR_MAX_WIDTH,
 )
 
-from .circular_heatmap import CARTESIAN, CIRCULAR, ARRANGEMENTS, CALENDAR_ANGLE, eligible as circular_eligible
+from .circular_heatmap import CARTESIAN, CIRCULAR, ARRANGEMENTS, CALENDAR_ANGLE, eligible as circular_eligible, contour_eligible as circular_contour_eligible
 
 STORE="_r219_heatmap_settings"
 COUNTERS="_r219_heatmap_occurrences"
@@ -76,12 +76,10 @@ def local_heatmap_settings(st,fig):
         if geometry==CIRCULAR:
             state.setdefault(prefix+"arrangement",arrangement)
             arrangement=st.radio("Circular arrangement",ARRANGEMENTS,key=prefix+"arrangement",horizontal=True)
-            st.caption("Circular tiles preserve the original calendar cells and missing periods.")
-            values={**saved,"geometry":geometry,"arrangement":arrangement}
-            save_preferences(state,key,values)
-            return {**values,"mode":TILES}
+            contour_ok=circular_contour_eligible(fig,arrangement) is not None
+            st.caption("Circular rendering preserves the original calendar coordinates; contours stop at missing cells.")
         if not contour_ok:
-            values={**saved,"geometry":CARTESIAN,"arrangement":arrangement}
+            values={**saved,"geometry":geometry,"arrangement":arrangement}
             save_preferences(state,key,values)
             return {**values,"mode":TILES}
         columns=st.columns([2,1])
