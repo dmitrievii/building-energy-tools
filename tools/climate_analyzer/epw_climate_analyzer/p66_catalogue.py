@@ -258,7 +258,7 @@ def catalogue(df,context,coverage=FULL):
     # grid per kind rather than enumerating every possible threshold pair.
     from .threshold_sensitivity import SPECS as SENSITIVITY_SPECS
     for kind,spec in SENSITIVITY_SPECS.items():
-        chapter=NV if kind.startswith("nv_") or kind=="night" else SHADE if kind=="solar" else HUM if kind=="surface" else HVAC
+        chapter=NV if kind.startswith("nv_") or kind.startswith("night") else SHADE if kind=="solar" else HUM if kind=="surface" else HVAC
         source_ok=hourly and all(c in df and base.numeric(df,c).notna().any() for c in spec.fields)
         add(chapter,spec.title,"threshold_sensitivity",args=(kind,),ok=source_ok)
     add(SHADE,"Shading geometry · overhang and symmetric fins","shading_geometry_sensitivity",ok=solar_ok)
