@@ -35,7 +35,7 @@ def render_atlas(df,context,reference_df=None):
         years=sorted(set(reference_df.index.year))
         if len(years)>=MIN_REFERENCE_YEARS and st.checkbox("Include historical climate anomalies",value=False,key="r221_atlas_anomaly_enabled"):
             default=(1991,2020) if years[0]<=1991 and years[-1]>=2020 else (years[0],years[-1])
-            lo,hi=st.slider("Atlas anomaly reference years",int(years[0]),int(years[-1]),default,key="r221_atlas_anomaly_reference")
+            lo,hi=st.slider("Atlas anomaly reference years",int(years[0]),int(years[-1]),default,key=f"r221_atlas_anomaly_reference_{years[0]}_{years[-1]}")
             if hi-lo+1>=MIN_REFERENCE_YEARS:
                 context={**context,"anomaly reference years":[int(lo),int(hi)],"anomaly quantities":anomaly_available(reference_df)}
             else:st.info("Select at least three reference years to include anomaly diagrams.")
