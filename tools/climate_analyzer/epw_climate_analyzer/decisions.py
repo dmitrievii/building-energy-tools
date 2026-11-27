@@ -68,7 +68,8 @@ def night_flushing_reference(df, night_start_hour=22, night_end_hour=6):
     """Return night-clock mask and complete reference-day maximum, shared by screens."""
     start = int(max(0, min(23, night_start_hour)))
     end = int(max(0, min(23, night_end_hour)))
-    hour = df["hour_of_day"]
+    # Analysis-frame timestamps already encode the selected analysis clock.
+    hour = df["hour_of_day"] if "hour_of_day" in df else pd.Series(df.index.hour,index=df.index)
 
     crosses_midnight = start > end
     if crosses_midnight:
