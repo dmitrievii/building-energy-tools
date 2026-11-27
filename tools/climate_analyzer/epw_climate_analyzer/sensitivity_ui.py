@@ -36,3 +36,16 @@ def panel(df,render,kinds,*,key,fixed=None,references=None):
     x=np.linspace(xmin,xmax,n);y=np.linspace(ymin,ymax,n)
     try:render(*figure(df,kind,x,y,fixed=p,reference=ref,percentage=percent))
     except (ValueError,KeyError) as exc:st.info(str(exc))
+
+
+def geometry_panel(df,render,*,geometry,albedo,key):
+    from .threshold_sensitivity import shading_geometry_figure
+    st.caption("Sweep the overhang and equal left/right fin depths. Aperture size and façade azimuth remain fixed.")
+    with st.expander("Geometry ranges",expanded=False):
+        a,b=st.columns(2)
+        xmax=a.number_input("Maximum overhang depth [m]",min_value=.1,max_value=10.,value=max(2.,float(geometry["overhang"])),step=.1,key=key+"_x")
+        ymax=b.number_input("Maximum depth of each fin [m]",min_value=.1,max_value=10.,value=max(2.,float(geometry["left_fin"]),float(geometry["right_fin"])),step=.1,key=key+"_y")
+        n=st.select_slider("Grid resolution per axis",options=[5,11,21,31],value=11,key=key+"_n")
+    percent=st.radio("Result unit",["Intercepted direct irradiation [kWh/m²]","Share of incident direct irradiation [%]"],horizontal=True,key=key+"_unit").startswith("Share")
+    try:render(*shading_geometry_figure(df,np.linspace(0,xmax,n),np.linspace(0,ymax,n),geometry=geometry,albedo=albedo,percentage=percent))
+    except ValueError as exc:st.info(str(exc))
