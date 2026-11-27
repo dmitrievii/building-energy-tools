@@ -220,9 +220,9 @@ def solar_figure_interpretation(
                     z=np.asarray(tr.z,dtype=float)
                     if z.ndim==2 and np.isfinite(z).any():
                         hi=np.unravel_index(np.nanargmax(z),z.shape)
-                        x=list(tr.x);y=list(tr.y)
+                        from .period_display import format_heatmap_cell
                         return (f"Highest displayed {name} heat-map cell: "
-                                f"{_fmt(z[hi])} {unit} at x={x[hi[1]]}, y={y[hi[0]]}. "
+                                f"{_fmt(z[hi])} {unit} ({format_heatmap_cell(fig, tr, hi, df)}). "
                                 "The selected cell aggregation shows the strongest occurrence within the displayed period and statistic. "+context)
         return context
     if kind in ("duration","duration curve"):
