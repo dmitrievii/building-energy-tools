@@ -1681,7 +1681,6 @@ def render_climate_file_source() -> None:
         st.write("Use an EnergyPlus Weather (EPW) file that you already have. The file is processed for the current session.")
         local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload"+st.session_state.get("_mem_r12_reset_epoch",""))
         if local_file is not None:
-            st.write(f"Selected file: `{local_file.name}`")
             if st.button("Analyze this EPW", type="primary"):
                 set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
                 st.rerun()
@@ -6618,10 +6617,10 @@ def main() -> None:
 
     climate_area=globals().get("_r219_climate_area",st.sidebar)
     climate_area.write(f"**{epw.location.city}, {epw.location.country}**")
-    climate_area.caption(epw.name)
     if page=="Data Quality":
         st.caption(f"Rows in current view: {len(filtered_df):,} of {len(full_df):,}")
         with st.expander("Data provenance", expanded=False):
+            st.caption(f"Source file: {epw.name}")
             st.caption(active_file.source)
             if pressure_mode == "EPW station pressure with fallback median":
                 st.caption(f"Pressure: hourly EPW station values; fallback median {active_pressure:,.0f} Pa")
