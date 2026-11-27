@@ -47,8 +47,11 @@ def bubble_note(table,*,unit,above,quantity):
     su=severity_unit(quantity,unit)
     worst=table.loc[table.excess.idxmax()]
     extreme=table.loc[table.peak.idxmax() if above else table.peak.idxmin()]
-    date=worst.start.strftime("%d.%m.%Y")
+    datefmt="%d.%m.%Y" if unit=="days" else "%d.%m.%Y at %H:%M"
+    date=worst.start.strftime(datefmt)
+    peak_unit=re.search(r"\[([^]]+)\]",quantity)
+    peak_unit=peak_unit.group(1) if peak_unit else ""
     return (f"Bubble area represents cumulative threshold excess [{su}]; open symbols represent events exactly at the threshold. "
             f"The greatest cumulative severity is {worst.excess:,.2f} {su}, beginning {date}, over {worst.duration:g} {unit}. "
-            f"The most extreme observed peak is {extreme.peak:.2f}. "
+            f"The most extreme observed {'maximum' if above else 'minimum'} is {extreme.peak:.2f} {peak_unit}, in the event beginning {extreme.start.strftime(datefmt)}. "
             "Duration, peak and cumulative severity distinguish short intense episodes from longer persistent conditions.")
