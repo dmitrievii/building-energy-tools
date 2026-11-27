@@ -35,6 +35,7 @@ SPECS={
     "nv_temperature_range":Spec("Natural ventilation · temperature range","Minimum outdoor temperature [°C]","Maximum outdoor temperature [°C]",(8.,26.),(20.,36.),(16.,26.),"Suitable",(T,W)),
     "nv_wind_range":Spec("Natural ventilation · wind-speed range","Minimum wind speed [m/s]","Maximum wind speed [m/s]",(0.,3.),(2.,12.),(.5,6.),"Suitable",(T,W,V)),
     "night":Spec("Night flushing · hot-day and night limits","Preceding hot-day threshold [°C]","Maximum night temperature [°C]",(20.,36.),(12.,28.),(26.,20.),"Suitable night",(T,)),
+    "night_delta":Spec("Night flushing · day–night temperature difference","Minimum reference-day to night temperature difference [K]","Maximum night temperature [°C]",(0.,18.),(12.,28.),(6.,20.),"Suitable night",(T,)),
     "solar":Spec("Solar protection · climatic thresholds","Minimum outdoor temperature [°C]","Minimum GHI intensity [W/m²]",(16.,34.),(0.,800.),(24.,250.),"Solar-protection",(T,G)),
     "neutral":Spec("Passive design · neutral-temperature window","Heating threshold [°C]","Cooling threshold [°C]",(12.,24.),(20.,34.),(18.,26.),"Neutral-temperature",(T,)),
     "economizer":Spec("Economizer · temperature and enthalpy limits","Maximum outdoor temperature [°C]","Return-air enthalpy reference [kJ/kg dry air]",(16.,32.),(25.,80.),(24.,50.),"Eligible",(T,H)),
@@ -91,10 +92,12 @@ def _schedule(df,p):
     if p.get("weekdays_only",False):keep &= df.index.weekday<5
     return keep
 
-def calculate(df,kind,x,y,*,fixed=None):
+def calculate(df,kind,x,y,*,fixed=None,basis="hours"):
     """Return exact hours grid and valid denominator in physical hours."""
     dt=_admit(df);x,y=_axis(x),_axis(y)
     p=dict(fixed or {});spec=SPECS[kind]
+    if basis not in ("hours","nights") or (basis=="nights" and not kind.startswith("night")):
+        raise ValueError("Night counts are available only for night-flushing sensitivity.")
     if any(c not in df for c in spec.fields):raise ValueError("Required source quantities are unavailable.")
     t=numeric(df,T);w=numeric(df,W);v=numeric(df,V)
     invalid=None
@@ -116,10 +119,23 @@ def calculate(df,kind,x,y,*,fixed=None):
             a,b,ops=t,t,(">=","<=");invalid=x[None,:]>y[:,None]
         else:
             a,b,ops=v,v,(">=","<=");invalid=(x[None,:]>y[:,None])|(x[None,:]<0)|(y[:,None]<0)
-    elif kind=="night":
+    elif kind in ("night","night_delta"):
         is_night,hot=night_flushing_reference(df)
         valid=_valid(t,hot)&is_night.to_numpy(dtype=bool)
-        keep=valid;a,b,ops=hot,t,(">=","<=")
+        if basis=="nights":
+            # Both comparisons are monotone in decreasing night temperature;
+            # the observed minimum is the exact witness for at least one
+            # qualifying interval. Reference-day maximum is constant per anchor.
+            if not valid.any():raise ValueError("No valid night observations with complete reference days.")
+            idx=pd.DatetimeIndex(df.index)
+            days=idx.normalize()
+            anchors=days.where(idx.hour>6,days-pd.DateOffset(days=1))
+            table=pd.DataFrame({"night_temperature":t.to_numpy()[valid],
+                                "reference_max":hot.to_numpy()[valid]},index=anchors[valid])
+            grouped=table.groupby(level=0).agg({"night_temperature":"min","reference_max":"first"})
+            a=grouped.reference_max if kind=="night" else grouped.reference_max-grouped.night_temperature
+            return joint_counts(a,grouped.night_temperature,x,y,x_op=">=",y_op="<="),float(len(grouped))
+        keep=valid;a,b,ops=(hot if kind=="night" else hot-t),t,(">=","<=")
     elif kind=="solar":
         ghi=numeric(df,G)/dt
         valid=_valid(t,ghi)&(ghi.to_numpy()>=0)
@@ -153,18 +169,19 @@ def calculate(df,kind,x,y,*,fixed=None):
     if invalid is not None:z=np.where(invalid,np.nan,z)
     return z,float(valid.sum()*dt)
 
-def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False):
+def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False,basis="hours"):
     spec=SPECS[kind];x,y=_axis(x),_axis(y)
-    hours,denom=calculate(df,kind,x,y,fixed=fixed)
+    hours,denom=calculate(df,kind,x,y,fixed=fixed,basis=basis)
     values=hours/denom*100 if percentage else hours
-    unit="%" if percentage else "h"
+    amount_unit="nights" if basis=="nights" else "h"
+    unit="%" if percentage else amount_unit
     f=go.Figure(go.Heatmap(x=x,y=y,z=values,customdata=hours,hoverongaps=False,
         colorscale="Oranges" if kind=="surface" else NV_SUITABILITY_COLORSCALE,zmin=0,zmax=100 if percentage else denom,
         colorbar=dict(title=f"{spec.result} [{unit}]"),
-        hovertemplate="%{x:.2f} · %{y:.2f}<br>"+spec.result+": %{z:,.2f} "+unit+"<br>Eligible: %{customdata:,.1f} h<extra></extra>",
+        hovertemplate="%{x:.2f} · %{y:.2f}<br>"+spec.result+": %{z:,.2f} "+unit+"<br>Eligible: %{customdata:,.1f} "+amount_unit+"<extra></extra>",
         meta={"heatmap_semantics":"continuous","heatmap_quantity":"threshold sensitivity"}))
     ref=tuple(reference or spec.reference)
-    ref_hours=float(calculate(df,kind,[ref[0]],[ref[1]],fixed=fixed)[0][0,0])
+    ref_hours=float(calculate(df,kind,[ref[0]],[ref[1]],fixed=fixed,basis=basis)[0][0,0])
     if np.isfinite(ref_hours) and x[0]<=ref[0]<=x[-1] and y[0]<=ref[1]<=y[-1]:
         f.add_scatter(x=[ref[0]],y=[ref[1]],mode="markers",name="Active reference",
             marker=dict(symbol="circle-open",size=13,color="#202020",line=dict(width=2)),
@@ -173,20 +190,25 @@ def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False):
         template="plotly_white",height=520,plot_bgcolor="#E5E7EB",
         meta={"layout_kind":"threshold_sensitivity","sensitivity_kind":kind})
     finite=hours[np.isfinite(hours)]
-    note=(f"Each cell evaluates {spec.result.lower()} hours at its exact threshold pair. "
-          f"The common denominator is {denom:,.1f} valid observation hours within the active screening scope. ")
-    if finite.size:note+=f"Across admissible pairs the result ranges from {finite.min():,.1f} to {finite.max():,.1f} h. "
-    if np.isfinite(ref_hours):note+=f"The active reference ({ref[0]:g}, {ref[1]:g}) yields {ref_hours:,.1f} h ({100*ref_hours/denom:.1f}%). "
+    scope_unit="observed nights" if basis=="nights" else "valid observation hours"
+    result_label="nights with at least one eligible interval" if basis=="nights" else spec.result.lower()+" hours"
+    note=(f"Each cell evaluates {result_label} at its exact threshold pair. "
+          f"The common denominator is {denom:,.1f} {scope_unit} within the active screening scope. ")
+    if finite.size:note+=f"Across admissible pairs the result ranges from {finite.min():,.1f} to {finite.max():,.1f} {amount_unit}. "
+    if np.isfinite(ref_hours):note+=f"The active reference ({ref[0]:g}, {ref[1]:g}) yields {ref_hours:,.1f} {amount_unit} ({100*ref_hours/denom:.1f}%). "
     if kind.startswith("nv_"):
         note+="The other ventilation limits and occupancy schedule remain fixed. "
         if kind=="nv_wind_range" and (fixed or {}).get("wind_min_m_s") is None and (fixed or {}).get("wind_max_m_s") is None:
             note+="The reference wind limits are the default candidate limits; the active ventilation screen has no wind-speed restriction. "
-    if kind=="night":note+="Only night hours with a completely observed reference day enter the denominator. "
+    if kind.startswith("night"):note+="Only night observations with a completely observed reference day enter the denominator. "
+    if kind=="night_delta":note+="The temperature difference is the complete reference-day maximum minus each night observation temperature. "
+    if basis=="nights":note+="A night qualifies if at least one observed interval meets both limits; continuous-duration requirements remain in Nightly persistence. "
     if kind=="surface":note+="Surface relative humidity follows outdoor vapour pressure and the specified surface saturation pressure; RH at or above the threshold is counted. "
     if kind=="solar":note+="GHI interval energy is converted to mean intensity using the declared source cadence. "
     if kind=="economizer":note+="The fixed minimum outdoor temperature and strict enthalpy comparison are retained. "
     if kind=="neutral":note+="The neutral interval includes both temperature boundaries and describes the temperature-only band between heating and cooling thresholds. "
-    note+="Grey cells indicate inadmissible threshold combinations. Hours quantify climatic opportunities or exposure under the stated screening assumptions."
+    if np.isnan(hours).any():note+="Grey cells indicate inadmissible threshold combinations. "
+    note+="Results quantify climatic opportunities or exposure under the stated screening assumptions."
     return f,note
 
 
