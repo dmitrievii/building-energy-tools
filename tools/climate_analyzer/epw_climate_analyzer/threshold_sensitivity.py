@@ -159,7 +159,7 @@ def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False):
     values=hours/denom*100 if percentage else hours
     unit="%" if percentage else "h"
     f=go.Figure(go.Heatmap(x=x,y=y,z=values,customdata=hours,hoverongaps=False,
-        colorscale=NV_SUITABILITY_COLORSCALE,zmin=0,zmax=100 if percentage else denom,
+        colorscale="Oranges" if kind=="surface" else NV_SUITABILITY_COLORSCALE,zmin=0,zmax=100 if percentage else denom,
         colorbar=dict(title=f"{spec.result} [{unit}]"),
         hovertemplate="%{x:.2f} · %{y:.2f}<br>"+spec.result+": %{z:,.2f} "+unit+"<br>Eligible: %{customdata:,.1f} h<extra></extra>",
         meta={"heatmap_semantics":"continuous","heatmap_quantity":"threshold sensitivity"}))
@@ -184,4 +184,60 @@ def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False):
     if kind=="economizer":note+="The fixed minimum outdoor temperature and strict enthalpy comparison are retained. "
     if kind=="neutral":note+="The neutral interval includes both temperature boundaries. "
     note+="Grey cells indicate inadmissible threshold combinations. Hours quantify climatic opportunities or exposure under the stated screening assumptions."
+    return f,note
+
+
+def shading_geometry_figure(df,x,y,*,geometry,albedo=None,percentage=False):
+    """Sweep overhang and symmetric fin depths, holding aperture/orientation fixed.
+
+    Reuse one direct-beam plane-of-array field. The analytical aperture-area
+    kernel remains identical to the existing shading ledger. No spatial
+    sampling, per-candidate irradiance reconstruction or scenario cube.
+    """
+    dt=_admit(df);x,y=_axis(x),_axis(y)
+    if len(x)>31 or len(y)>31 or np.any(x<0) or np.any(y<0):
+        raise ValueError("Geometry sweep requires nonnegative depths and at most 31 values per axis.")
+    from .solar_shading import shading_ledger, shaded_fraction
+    az=numeric(df,"solar_azimuth_deg").to_numpy(dtype=float)
+    el=90-numeric(df,"solar_apparent_zenith_deg").to_numpy(dtype=float)
+    base=dict(geometry)
+    ledger=shading_ledger(df,albedo=albedo,**base)
+    direct=ledger["Unshaded direct"].to_numpy(dtype=float)
+    valid=np.isfinite(direct)&(direct>=0)&np.isfinite(az)&np.isfinite(el)&(el>=-90)&(el<=90)
+    if not valid.any():raise ValueError("No complete coincident direct-beam and solar-position observations.")
+    observed_hours=float(valid.sum()*dt)
+    az,el,direct=az[valid],el[valid],direct[valid]
+    total=float(direct.sum()/1000.)
+    # Bound total evaluations; multi-year archives can reduce grid resolution.
+    if len(direct)*len(x)*len(y)>30_000_000:
+        raise ValueError("Reduce geometry grid resolution or select a shorter observation period.")
+    if percentage and total<=0:raise ValueError("No incident direct irradiation for percentage reduction.")
+    matrix=np.empty((len(y),len(x)))
+    for i,fin in enumerate(y):
+        for j,overhang in enumerate(x):
+            candidate={**base,"overhang":float(overhang),"left_fin":float(fin),"right_fin":float(fin)}
+            matrix[i,j]=np.dot(direct,shaded_fraction(az,el,**candidate))/1000.
+    z=100*matrix/total if percentage else matrix
+    unit="%" if percentage else "kWh/m²"
+    f=go.Figure(go.Heatmap(x=x,y=y,z=z,customdata=matrix,colorscale="YlOrBr",zmin=0,
+        zmax=100 if percentage else max(total,1e-12),hoverongaps=False,
+        colorbar=dict(title=f"Intercepted direct [{unit}]"),
+        hovertemplate="Overhang %{x:.2f} m · each fin %{y:.2f} m<br>Intercepted direct: %{z:,.2f} "+unit+"<extra></extra>",
+        meta={"heatmap_semantics":"continuous","heatmap_quantity":"intercepted direct irradiation"}))
+    ref=base.get("overhang",0.),base.get("left_fin",0.)
+    symmetric=np.isclose(ref[1],base.get("right_fin",0.))
+    if symmetric and x[0]<=ref[0]<=x[-1] and y[0]<=ref[1]<=y[-1]:
+        f.add_scatter(x=[ref[0]],y=[ref[1]],mode="markers",name="Active reference",
+            marker=dict(symbol="circle-open",size=13,color="#202020",line=dict(width=2)))
+    f.update_layout(title="Shading geometry · overhang and symmetric fins",
+        xaxis_title="Overhang depth [m]",yaxis_title="Depth of each side fin [m]",
+        template="plotly_white",height=520,meta={"layout_kind":"threshold_sensitivity"})
+    actual=float(ledger["Intercepted direct"].to_numpy(dtype=float)[valid].sum()/1000.)
+    note=(f"The selected façade and aperture receive {total:,.2f} kWh/m² of direct irradiation across "
+          f"{observed_hours:,.1f} valid observation hours. The parameter grid intercepts "
+          f"{matrix.min():,.2f}–{matrix.max():,.2f} kWh/m². "
+          f"The active geometry intercepts {actual:,.2f} kWh/m². "
+          "Each cell uses equal left and right fin depths and the specified overhang; aperture dimensions and façade azimuth remain fixed. "
+          "Percentages refer to incident direct-beam irradiation. Diffuse and ground-reflected components retain the existing direct-only shading model.")
+    if not symmetric:note+=" The active geometry has unequal fin depths and is outside this symmetric-fin parameter family."
     return f,note
