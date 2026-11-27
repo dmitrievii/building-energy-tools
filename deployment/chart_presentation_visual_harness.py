@@ -29,6 +29,23 @@ from epw_climate_analyzer.psychrometrics import add_psychrometric_properties
 
 
 st.set_page_config(page_title="Chart presentation visual harness", layout="wide")
+if st.query_params.get("sidebar") == "1":
+    from epw_climate_analyzer import sidebar_layout as sidebar
+    from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES, NAVIGATION_KEY
+    st.sidebar.caption("Building Energy Tools")
+    st.sidebar.title("Climate Analyzer")
+    sidebar.render_nav_style(st)
+    location = st.sidebar.container()
+    navigation = st.sidebar.container()
+    location.write("**Graz.AP, AUT**")
+    st.session_state.setdefault(NAVIGATION_KEY, "Overview")
+    install_global_chart_presentation(st)
+    sidebar.filter_panel(st, st.sidebar.container())
+    sidebar.render_service(st, st.sidebar.container(), lambda _: None)
+    sidebar.render_navigation(st, NAVIGATION_PAGES, navigation)
+    st.title("Sidebar geometry harness")
+    st.stop()
+
 install_global_chart_presentation(st)
 st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")

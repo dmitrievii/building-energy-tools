@@ -102,6 +102,10 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn('[data-testid="stExpander"] details', NAV_CSS)
         self.assertIn("border:0!important", NAV_CSS)
         self.assertIn("summary:focus-visible", NAV_CSS)
+        self.assertIn("button > div > span", NAV_CSS)
+        self.assertIn('stSidebarUserContent', NAV_CSS)
+        self.assertIn('padding-left:1.25rem!important', NAV_CSS)
+        self.assertIn('min-height:2rem!important', NAV_CSS)
 
     def test_epw_filename_is_provenance_not_sidebar_copy(self) -> None:
         source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")

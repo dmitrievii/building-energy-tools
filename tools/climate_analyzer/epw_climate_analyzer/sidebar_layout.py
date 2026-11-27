@@ -56,10 +56,34 @@ section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button,
 section[data-testid="stSidebar"] .st-key-_r219_service_button button {
     display:flex!important; align-items:center!important;
-    justify-content:flex-start!important; text-align:left!important; min-height:2rem;
-    padding:.3rem .55rem; border:0!important; box-shadow:none!important;
+    justify-content:flex-start!important; text-align:left!important; min-height:2rem!important;
+    padding:.3rem .55rem!important; border:0!important; box-shadow:none!important;
     color:inherit!important; border-radius:.35rem; background:transparent!important;
     font-weight:400;
+}
+/* Streamlit 1.63 DynamicButtonLabel has TWO independently centered flex
+   wrappers (div > span), even when the button itself is left aligned.
+   Stretch the outer label and explicitly left-align both wrappers. */
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree button > div,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button > div {
+    display:flex!important; width:100%!important; min-width:0!important;
+    justify-content:flex-start!important; align-items:center!important;
+}
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree button > div > span,
+section[data-testid="stSidebar"] .st-key-_r219_service_button button > div > span {
+    display:flex!important; width:100%!important; min-width:0!important;
+    justify-content:flex-start!important; align-items:center!important;
+    gap:.5rem!important;
+}
+/* Compact the sidebar's outer vertical stack, not the content inside open
+   settings panels. Previously each settings expander inherited the default
+   Streamlit block gap while navigation used a compact local gap. */
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"]:not([data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"]) {
+    gap:.15rem!important;
+}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary > span {
+    align-items:center!important; justify-content:flex-start!important;
+    gap:.5rem!important;
 }
 /* Streamlit renders button labels in nested markdown containers. Align
    the label itself, not only the outer flex row. */
@@ -72,7 +96,7 @@ section[data-testid="stSidebar"] .st-key-_r219_service_button button p {
     text-align:left!important; margin:0;
 }
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button {
-    padding-left:1.25rem; font-size:.92rem;
+    padding-left:1.25rem!important; font-size:.92rem;
 }
 /* Use the same flat row language for native settings expanders while
    retaining their mounted controls and native keyboard accessibility. */
@@ -81,7 +105,7 @@ section[data-testid="stSidebar"] [data-testid="stExpander"] details {
     background:transparent!important;
 }
 section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
-    min-height:2rem; padding:.3rem .55rem!important;
+    min-height:2rem!important; padding:.3rem .55rem!important;
     justify-content:flex-start!important; text-align:left!important;
     border-radius:.35rem; background:transparent!important;
     color:inherit!important; font-weight:400;

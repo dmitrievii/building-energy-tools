@@ -428,6 +428,59 @@ try {
   report.checks.p2Visuals=true;
   await page.screenshot({path:OUT_DIR+'/11-p2-directional-graphics.png',fullPage:true});
 
+  // Measure rendered label coordinates and row pitch, not just CSS strings.
+  await page.goto(TARGET_URL+'?sidebar=1',{waitUntil:'domcontentloaded'});
+  const sideFrame=await appFrame(page,'Sidebar geometry harness');
+  const sidebar=sideFrame.locator('[data-testid="stSidebar"]');
+  const overview=sidebar.locator('.st-key-_r219_nav_Overview_button button');
+  try {
+    await overview.waitFor({state:'visible'});
+  } catch (error) {
+    report.metrics.sidebarMountDiagnostic=await sidebar.innerText().catch(()=>'(sidebar unavailable)');
+    throw error;
+  }
+  await page.evaluate(()=>document.fonts.ready);
+  await page.mouse.move(900,400);
+  const measureSidebar=()=>sidebar.evaluate(root=>{
+    const nav=root.querySelector('.st-key-_r220_navigation_tree');
+    const rows=[...nav.querySelectorAll('button'),...root.querySelectorAll('[data-testid="stExpander"] summary'),
+      ...root.querySelectorAll('.st-key-_r219_service_button button')];
+    return rows.filter(r=>r.getBoundingClientRect().height>0).map(r=>{
+      const label=r.querySelector('[data-testid="stMarkdownContainer"] p')||r.querySelector('p');
+      if(!label)throw new Error('Sidebar label not found: '+r.textContent);
+      const b=r.getBoundingClientRect();
+      const range=document.createRange();
+      range.selectNodeContents(label);
+      const p=range.getBoundingClientRect();
+      return {text:label.textContent.trim(),x:p.left,top:b.top,height:b.height,
+        left:b.left,padding:getComputedStyle(r).paddingLeft};
+    }).sort((a,b)=>a.top-b.top);
+  });
+  const collapsed=await measureSidebar();
+  report.metrics.sidebarCollapsed=collapsed;
+  const topRows=collapsed.filter(r=>/^(Climate source|Overview|Climate|Explore|Design|Report|Appearance|Architectural background|Export settings|Data filters|Service & Diagnostics)(\s*[▸▾])?$/.test(r.text));
+  if(topRows.length!==11) throw new Error('Missing sidebar rows: '+JSON.stringify(collapsed));
+  const baseline=topRows[0].x;
+  for(const row of topRows) assertNear(row.x,baseline,3,'Main label alignment '+row.text);
+  const navPitch=topRows[1].top-topRows[0].top;
+  for(let i=1;i<6;i++)assertNear(topRows[i].top-topRows[i-1].top,navPitch,2,'Navigation pitch '+topRows[i].text);
+  for(let i=7;i<topRows.length;i++)assertNear(topRows[i].top-topRows[i-1].top,navPitch,3,'Settings pitch '+topRows[i].text);
+  report.metrics.sidebarCollapsed=collapsed;
+  await page.screenshot({path:OUT_DIR+'/12-sidebar-collapsed.png',fullPage:true});
+  await sidebar.locator('.st-key-_r219_group_Design button').click();
+  await sidebar.locator('.st-key-_r220_page_Natural_Ventilation button').waitFor({state:'visible'});
+  await page.mouse.move(900,400);
+  const expanded=await measureSidebar();
+  report.metrics.sidebarExpanded=expanded;
+  const child=expanded.find(r=>/^Natural Ventilation$/i.test(r.text));
+  const parent=expanded.find(r=>/^Design/.test(r.text));
+  if(!child||!parent)throw new Error('Missing Design submenu: '+JSON.stringify(expanded));
+  const rem=await sideFrame.locator('html').evaluate(e=>parseFloat(getComputedStyle(e).fontSize));
+  assertNear(child.x-parent.x,0.7*rem,3,'Intentional submenu indentation');
+  report.metrics.sidebarExpanded=expanded;
+  report.checks.sidebarGeometry=true;
+  await page.screenshot({path:OUT_DIR+'/13-sidebar-expanded.png',fullPage:true});
+
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));
