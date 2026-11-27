@@ -3264,9 +3264,8 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
         return
     st.header("EPW Climate Analyzer")
     st.write("Interactive climate-analysis dashboard for architecture and HVAC decision support.")
-    statistics_scope = st.radio("Statistics scope", ["Full EPW file", "Current sidebar filter"], horizontal=True)
-    stats_df = full_df if statistics_scope == "Full EPW file" else df
-    metric_cards(stats_df)
+    # Overview follows the same global data selection as every analysis page.
+    metric_cards(df)
 
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -3288,7 +3287,7 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
             """
         )
 
-    render_calculated_epw_statistics(stats_df)
+    render_calculated_epw_statistics(df)
 
     issue_count = len(issues)
     error_count = sum(1 for issue in issues if getattr(issue, "severity", "") == "error")
