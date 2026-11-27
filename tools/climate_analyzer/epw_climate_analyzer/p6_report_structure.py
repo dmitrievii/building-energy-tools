@@ -11,7 +11,7 @@ CHAPTERS={"Overview":"Climate overview","Temperature":"Temperature","Humidity an
 "Solar and Radiation":"Solar radiation","Wind and Ventilation":"Wind","Sky and Daylight":"Sky and daylight",
 "Precipitation and Snow":"Precipitation and snow","Natural Ventilation":"Natural ventilation",
 "Shading analysis":"Shading","HVAC and Passive Design":"HVAC and passive design","Outdoor Thermal Comfort":"Outdoor thermal comfort",
-"Time Series and Overlay":"Time series and relationships","Compare Climates":"Climate comparison","Data Quality":"Data quality"}
+"Time Series and Overlay":"Time series and relationships","Climate Anomalies":"Climate anomalies and interannual variability","Compare Climates":"Climate comparison","Data Quality":"Data quality"}
 T="dry_bulb_temperature_c";RH="relative_humidity_pct";W="humidity_ratio_g_kg";V="wind_speed_m_s";H="moist_air_enthalpy_kj_kg"
 G="global_horizontal_radiation_wh_m2";D="diffuse_horizontal_radiation_wh_m2";N="direct_normal_radiation_wh_m2";P="liquid_precipitation_depth_mm"
 VARIABLES={
