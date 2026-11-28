@@ -616,6 +616,55 @@ try {
   report.metrics.cumulativeResources=cumulativeMetrics;
   report.checks.eventCumulative=true;
   await page.screenshot({path:OUT_DIR+'/21-event-cumulative.png',fullPage:true});
+  // R2.22 exercises the actual production sensitivity panel, not just
+  // standalone Plotly fixtures. Check metric geometry after a widget rerun.
+  await page.goto(TARGET_URL+'?r222=1',{waitUntil:'domcontentloaded'});
+  let geometryFrame=await waitForCharts(page,4);
+  async function geometryMetrics(frame) {
+    return frame.locator('.js-plotly-plot').evaluateAll(nodes=>{
+      const mesh=n=>n._fullData.filter(t=>t.type==='mesh3d').map(t=>({name:t.name,depth:Math.max(...Array.from(t.y))}));
+      return {actual:mesh(nodes[0]),candidate:mesh(nodes[2]),
+        actualGeometry:nodes[0]._fullLayout.meta?.shading_geometry,
+        candidateGeometry:nodes[2]._fullLayout.meta?.shading_geometry,
+        dragMode:nodes[0]._fullLayout.scene?.dragmode,
+        aspect:nodes[0]._fullLayout.scene?.aspectmode,
+        webgl:!!nodes[0].querySelector('canvas'),
+        heatmap:nodes[1]._fullData.some(t=>t.type==='heatmap'),
+        candidateMarker:nodes[1]._fullData.find(t=>t.name==='Selected candidate')?.x?.[0],
+        comparison:nodes[3]._fullLayout.annotations.map(a=>a.text),
+        filledPolygons:nodes[3].querySelectorAll('.scatterlayer .js-fill').length};
+    });
+  }
+  const geometryBefore=await geometryMetrics(geometryFrame);
+  if(!geometryBefore.webgl||geometryBefore.dragMode!=='turntable'||geometryBefore.aspect!=='data'
+    ||geometryBefore.actual.length!==8||!geometryBefore.heatmap
+    ||geometryBefore.candidateGeometry?.overhang!==geometryBefore.candidateMarker
+    ||geometryBefore.filledPolygons<6
+    ||!geometryBefore.comparison.some(t=>t.includes('intercepted')&&t.includes('remaining')))
+    throw new Error('R2.22 initial architectural geometry contract: '+JSON.stringify(geometryBefore));
+  await geometryFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/22-shading-3d.png'});
+  await geometryFrame.locator('.js-plotly-plot').nth(3).screenshot({path:OUT_DIR+'/23-shading-comparison.png'});
+  // Actual geometry changes independently of the grid candidate.
+  const input=geometryFrame.locator('[data-testid="stNumberInput"]').filter({hasText:'Actual overhang depth [m]'}).locator('input');
+  await input.fill('1.2');await input.press('Enter');
+  await geometryFrame.waitForFunction(()=>document.querySelector('.js-plotly-plot')?._fullLayout?.meta?.shading_geometry?.overhang===1.2,null,{timeout:60000});
+  geometryFrame=await waitForCharts(page,4);
+  // Candidate selection uses the real production slider.
+  const candidateSlider=await sliderControl(geometryFrame,'Candidate overhang [m]');
+  await candidateSlider.focus();await candidateSlider.press('End');
+  await geometryFrame.waitForFunction(()=>{
+    const nodes=document.querySelectorAll('.js-plotly-plot');
+    return nodes.length===4&&nodes[2]._fullLayout?.meta?.shading_geometry?.overhang===2;
+  },null,{timeout:60000});
+  geometryFrame=await waitForCharts(page,4);
+  const geometryAfter=await geometryMetrics(geometryFrame);
+  if(geometryAfter.actualGeometry?.overhang!==1.2||geometryAfter.candidateGeometry?.overhang!==2
+    ||geometryAfter.candidateMarker!==2||!geometryAfter.candidate.some(m=>m.depth===2))
+    throw new Error('R2.22 dynamic geometry contract: '+JSON.stringify(geometryAfter));
+  report.metrics.architecturalShading={before:geometryBefore,after:geometryAfter};
+  report.checks.architecturalShading=true;
+  await geometryFrame.locator('.js-plotly-plot').nth(2).screenshot({path:OUT_DIR+'/24-shading-candidate.png'});
+  await geometryFrame.locator('.js-plotly-plot').nth(3).screenshot({path:OUT_DIR+'/25-shading-comparison-updated.png'});
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));
