@@ -1,0 +1,43 @@
+name: Climate Analyzer Python 3.14 production runtime
+on:
+  pull_request:
+    paths:
+      - 'tools/climate_analyzer/**'
+      - 'deployment/**'
+      - '.github/workflows/climate-python314-production.yml'
+  workflow_dispatch:
+concurrency:
+  group: climate-python314-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  production-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Clean Cloud-equivalent environment
+        run: |
+          python -m venv .venv314
+          .venv314/bin/python -m pip install uv
+          .venv314/bin/uv pip install --python .venv314/bin/python --only-binary=:all: --no-binary-package psychrolib -r tools/climate_analyzer/requirements.txt
+          .venv314/bin/uv pip check --python .venv314/bin/python
+          .venv314/bin/python -m pip list --format=json > production-python314-packages.json
+      - name: Native imports and functional smoke
+        env:
+          PYTHONPATH: tools/climate_analyzer
+        run: |
+          .venv314/bin/python deployment/climate_python314_smoke.py
+      - name: Full scientific regression and report suite
+        working-directory: tools/climate_analyzer
+        env:
+          PYTHONPATH: .
+        run: |
+          ../../.venv314/bin/python -m unittest discover -s tests -v
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climate-python314-runtime-inventory
+          path: production-python314-packages.json
