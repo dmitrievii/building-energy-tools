@@ -37,6 +37,42 @@ class ArchitecturalShadingTests(unittest.TestCase):
         self.assertEqual(shadow_polygons(0.,35.,**dict(BASE,overhang=1.)),[])
         self.assertEqual(shadow_polygons(180.,-5.,**dict(BASE,overhang=1.)),[])
 
+    def test_combined_device_union_against_independent_ray_intersections(self):
+        # Independent midpoint integration: a ray exits either finite
+        # horizontal or vertical device. Combined overlap is counted once.
+        # Deliberately unequal devices, extreme aspect ratio and near-grazing sun.
+        g=dict(BASE,width=2.3,height=1.1,overhang=.47,left_fin=.36,right_fin=.82)
+        n=700
+        u=(np.arange(n)+.5)*g["width"]/n
+        z=(np.arange(n)+.5)*g["height"]/n
+        x,z=np.meshgrid(u,z)
+        for az in (91.,110.,145.,180.,215.,250.,269.):
+            for el in (5.,25.,55.,80.):
+                rel=np.deg2rad(az-g["facade"]);beta=np.deg2rad(el)
+                a=np.cos(beta)*np.sin(rel);b=np.cos(beta)*np.cos(rel);c=np.sin(beta)
+                top=(g["height"]-z)/c
+                tx=x+a*top;ty=b*top
+                hit=(tx>=0)&(tx<=g["width"])&(ty>=0)&(ty<=g["overhang"])
+                if abs(a)>1e-12:
+                    edge=g["width"] if a>0 else 0.
+                    fin=g["right_fin"] if a>0 else g["left_fin"]
+                    ts=(edge-x)/a
+                    hit |= (ts>=0)&(b*ts<=fin)&(z+c*ts<=g["height"])
+                exact=float(shaded_fraction(az,el,**g))
+                self.assertAlmostEqual(float(hit.mean()),exact,delta=0.003)
+                # Independent point-in-convex-polygon check of displayed union.
+                displayed=np.zeros(x.shape,dtype=bool)
+                for p in shadow_polygons(az,el,**g):
+                    if area(p)<1e-12:continue
+                    positive=np.ones(x.shape,dtype=bool);negative=positive.copy()
+                    for a0,b0 in zip(p,np.roll(p,-1,axis=0)):
+                        cross=(b0[0]-a0[0])*(z-a0[1])-(b0[1]-a0[1])*(x-a0[0])
+                        positive &= cross>=-1e-12
+                        negative &= cross<=1e-12
+                    displayed |= positive|negative
+                self.assertLess(float(np.count_nonzero(displayed!=hit))/hit.size,0.0001)
+                self.assertAlmostEqual(float(displayed.mean()),exact,delta=0.003)
+
     def test_comparison_figure_serialization(self):
         cases=[("No shading",BASE),("Current",dict(BASE,overhang=.6)),("Candidate",dict(BASE,overhang=1.,left_fin=.5,right_fin=.5))]
         f=comparison_figure(cases,205.,45.,energy=[(0,800),(100,700),(250,550)])
