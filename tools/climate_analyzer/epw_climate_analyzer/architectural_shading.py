@@ -91,29 +91,47 @@ def shadow_polygons(azimuth,elevation,**geometry):
     return result
 
 def comparison_figure(cases,azimuth,elevation,*,energy=None):
-    """True-scale aperture elevations for the same actual solar position."""
+    """Common-scale axonometric view of exact shadow projections."""
     fig=make_subplots(rows=1,cols=len(cases),subplot_titles=[name for name,_ in cases],horizontal_spacing=.05)
+    max_depth=max(max(_dimensions(g)[2:]) for _,g in cases)
     for col,(name,g) in enumerate(cases,1):
         w,h,o,l,r=_dimensions(g);q=.2*max(w,h)
-        def polygon(points,fill,line=EDGE):
-            p=np.asarray(points,float);p=np.vstack([p,p[0]])
+        def project(p):
+            x,y,z=np.asarray(p,float).T
+            return np.column_stack([x+.45*y,z-.30*y])
+        def polygon(points,fill,line=EDGE,local=False):
+            p=np.asarray(points,float) if local else project(points)
+            p=np.vstack([p,p[0]])
             fig.add_trace(go.Scatter(x=p[:,0],y=p[:,1],mode="lines",fill="toself",fillcolor=fill,
                 line=dict(color=line,width=1.2),hoverinfo="skip",showlegend=False),row=1,col=col)
-        polygon([(-q,-q),(w+q,-q),(w+q,h+q),(-q,h+q)],WALL)
-        polygon([(0,0),(w,0),(w,h),(0,h)],GLASS)
-        for p in shadow_polygons(azimuth,elevation,**g):polygon(p,SHADOW,SHADOW)
-        if o>0:fig.add_trace(go.Scatter(x=[0,w],y=[h,h],mode="lines",line=dict(color=DEVICE,width=7),hoverinfo="skip",showlegend=False),row=1,col=col)
-        for x,d in ((0,l),(w,r)):
-            if d>0:fig.add_trace(go.Scatter(x=[x,x],y=[0,h],mode="lines",line=dict(color=DEVICE,width=6),hoverinfo="skip",showlegend=False),row=1,col=col)
+        polygon([(-q,0,-q),(w+q,0,-q),(w+q,0,h+q),(-q,0,h+q)],WALL)
+        polygon([(0,0,0),(w,0,0),(w,0,h),(0,0,h)],GLASS)
+        for p in shadow_polygons(azimuth,elevation,**g):polygon(p,SHADOW,SHADOW,local=True)
+        if r>0:polygon([(w,0,0),(w,r,0),(w,r,h),(w,0,h)],DEVICE)
+        if l>0:polygon([(0,0,0),(0,l,0),(0,l,h),(0,0,h)],"#919A9E")
+        if o>0:polygon([(0,0,h),(w,0,h),(w,o,h),(0,o,h)],DEVICE)
+        # Direction arrow above the façade: direction toward the sun is
+        # projected using exactly the same local coordinates as the devices.
+        rel=np.deg2rad(azimuth-g["facade"]);beta=np.deg2rad(elevation)
+        direction=project([(0,0,0),(np.cos(beta)*np.sin(rel),np.cos(beta)*np.cos(rel),np.sin(beta))])[1]
+        norm=float(np.linalg.norm(direction))
+        if norm>1e-8:
+            tip=np.array([w/2,h+q*2.15])
+            tail=tip+direction/norm*q*.85
+            fig.add_trace(go.Scatter(x=[tail[0],tip[0]],y=[tail[1],tip[1]],mode="lines+markers",
+                line=dict(color=SUN,width=2,dash="dash"),marker=dict(size=[10,0],color=SUN),
+                showlegend=False,hovertemplate="Projected direction of direct sun<extra></extra>"),row=1,col=col)
         shade=float(shaded_fraction(azimuth,elevation,**g))*100
-        label=f"Overhang {o:g} m · fins {l:g}/{r:g} m<br>{shade:.1f}% of window shaded"
+        label=f"Overhang {o:.2f} m · fins {l:.2f}/{r:.2f} m<br>{shade:.1f}% of window shaded"
         if energy is not None:
             blocked,remaining=energy[col-1]
             label+=f"<br>{blocked:,.1f} kWh/m² intercepted<br>{remaining:,.1f} kWh/m² remaining"
-        fig.add_annotation(x=w/2,y=-q*.7,text=label,showarrow=False,yanchor="top",font=dict(size=13),row=1,col=col)
+        lower=min(-q,-.30*max_depth)
+        fig.add_annotation(x=(w+.45*max_depth)/2,y=lower-q*.40,text=label,showarrow=False,
+            yanchor="top",font=dict(size=12),row=1,col=col)
         anchor="x" if col==1 else f"x{col}"
-        fig.update_xaxes(visible=False,range=[-q*1.2,w+q*1.2],row=1,col=col)
-        fig.update_yaxes(visible=False,range=[-q*3.3,h+q*1.2],scaleanchor=anchor,scaleratio=1,constrain="domain",row=1,col=col)
+        fig.update_xaxes(visible=False,range=[-q*1.3,w+.45*max_depth+q*1.3],row=1,col=col)
+        fig.update_yaxes(visible=False,range=[lower-q*3.4,h+q*3.4],scaleanchor=anchor,scaleratio=1,constrain="domain",row=1,col=col)
     fig.update_layout(title=f"Window shadow comparison · solar azimuth {azimuth:.1f}° · elevation {elevation:.1f}°",
         template="plotly_white",height=480,margin=dict(l=10,r=10,t=90,b=15),showlegend=False,
         meta={"fixed_physical_axis_relationship":True})
