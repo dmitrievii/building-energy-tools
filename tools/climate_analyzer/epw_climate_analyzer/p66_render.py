@@ -143,7 +143,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="ridgeline":
         from .ridgeline import ridgeline_figure
         from .figure_interpretation_contract import bind_figure_interpretation
-        try:f,note=ridgeline_figure(df,c,u,cat.LABELS[c],grouping=a[0],wet_only=a[1]=="wet")
+        try:f,note=ridgeline_figure(df,c,u,cat.LABELS[c],grouping=a[0],wet_only=a[1]=="wet",latitude=context.get("latitude"))
         except ValueError as exc:raise NotApplicable(str(exc)) from exc
         bind_figure_interpretation(f,note)
         return f,note
