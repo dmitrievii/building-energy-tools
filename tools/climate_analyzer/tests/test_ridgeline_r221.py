@@ -30,10 +30,21 @@ class RidgelineR221Tests(unittest.TestCase):
         self.assertEqual(len(f.data),8)
 
     def test_seasonal_grouping_and_no_quantiles(self):
-        f,note = ridgeline_figure(self.df,"dry_bulb_temperature_c","°C","Dry-bulb temperature",grouping="Seasonal",quantiles=False)
-        self.assertEqual(list(f.layout.yaxis.ticktext),["DJF"])
+        f,note = ridgeline_figure(self.df,"dry_bulb_temperature_c","°C","Dry-bulb temperature",grouping="Seasonal",quantiles=False,latitude=47.07)
+        self.assertEqual(list(f.layout.yaxis.ticktext),["Winter"])
         self.assertEqual(len(f.data),2)
         self.assertNotIn("Baseline segments",note)
+
+    def test_season_names_follow_site_hemisphere(self):
+        dates=pd.date_range("2026-01-01",periods=12,freq="MS")
+        df=pd.DataFrame({"dry_bulb_temperature_c":np.arange(12.)},index=dates)
+        for latitude, expected in ((47.,["Winter","Spring","Summer","Autumn"]),
+                                  (-34.,["Summer","Autumn","Winter","Spring"]),
+                                  (None,["Dec–Feb","Mar–May","Jun–Aug","Sep–Nov"])):
+            f,note=ridgeline_figure(df,"dry_bulb_temperature_c","°C","Dry-bulb temperature",
+                                   grouping="Seasonal",latitude=latitude)
+            self.assertEqual(list(f.layout.yaxis.ticktext),expected)
+            self.assertIn(expected[0],note)
 
     def test_constant_groups_are_observed_values_not_smoothed(self):
         df=self.df.assign(dry_bulb_temperature_c=12.)
