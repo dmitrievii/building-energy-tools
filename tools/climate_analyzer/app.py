@@ -6574,8 +6574,22 @@ def main() -> None:
     from epw_climate_analyzer.startup_runtime import ensure_initialized
     stages=ensure_initialized()
     deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"] not in ("UTCI (conditional)","Folium")]
+    failed=[row for row in stages if row.get("status")=="failed" and row.get("stage") not in ("UTCI (conditional)","Folium")]
+    if failed:
+        # Preserve full diagnostics in the server log; the public message
+        # deliberately excludes import paths, configuration and secrets.
+        import logging
+        logging.getLogger(__name__).error("Core startup failed: %s",failed)
+        st.error("The server could not initialize required calculation libraries. Please contact the application maintainer; technical details are recorded in the server log.")
+        st.stop()
     if deferred:st.sidebar.warning("Core initialization incomplete · see Service & Diagnostics.")
-    from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
+    try:
+        from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
+    except ImportError:
+        import logging
+        logging.getLogger(__name__).exception("Report runtime dependency import failed")
+        st.error("A required report library could not be loaded. Please contact the application maintainer; technical details are recorded in the server log.")
+        st.stop()
     from epw_climate_analyzer import session_reaper as reaper_runtime
     from epw_climate_analyzer import chart_presentation as presentation_runtime
     if getattr(presentation_runtime,"RUNTIME_PRESENTATION_SCHEMA",None)!="MEM-PERF-R11-TURNTABLE":

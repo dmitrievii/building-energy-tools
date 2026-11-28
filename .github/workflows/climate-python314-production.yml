@@ -1,0 +1,67 @@
+name: Climate Analyzer Python 3.14 production runtime
+on:
+  pull_request:
+    paths:
+      - 'tools/climate_analyzer/**'
+      - 'deployment/**'
+      - '.github/workflows/climate-python314-production.yml'
+  workflow_dispatch:
+concurrency:
+  group: climate-python314-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  production-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+      - name: Clean Cloud-equivalent environment
+        run: |
+          python -m venv .venv314
+          .venv314/bin/python -m pip install uv
+          # PsychroLib 2.5.0 is a pure-Python sdist; permit only that build.
+          .venv314/bin/uv pip install --python .venv314/bin/python --no-deps psychrolib==2.5.0
+          .venv314/bin/uv pip install --python .venv314/bin/python --only-binary=:all: -r tools/climate_analyzer/requirements.txt
+          .venv314/bin/uv pip check --python .venv314/bin/python
+          .venv314/bin/python -m pip list --format=json > production-python314-packages.json
+      - name: Native imports and functional smoke
+        env:
+          PYTHONPATH: tools/climate_analyzer
+        run: |
+          .venv314/bin/python deployment/climate_python314_smoke.py
+      - name: Full scientific regression and report suite
+        working-directory: tools/climate_analyzer
+        env:
+          PYTHONPATH: .
+        run: |
+          ../../.venv314/bin/python -m unittest discover -s tests -v
+      - name: Python 3.14 real browser chart qualification
+        env:
+          TARGET_URL: http://127.0.0.1:8502/
+          CHART_PRESENTATION_SMOKE_DIR: artifacts/chart-presentation-python314
+          CHROME_PATH: /usr/bin/google-chrome
+          PYTHONPATH: tools/climate_analyzer
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright-core@1.55.0
+          mkdir -p artifacts/chart-presentation-python314
+          .venv314/bin/python -m streamlit run deployment/chart_presentation_visual_harness.py --server.headless=true --server.port=8502 > artifacts/chart-presentation-python314/server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          healthy=0
+          for _ in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:8502/_stcore/health; then healthy=1; break; fi
+            sleep 1
+          done
+          test "$healthy" -eq 1
+          node deployment/chart_presentation_browser_smoke_v4.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: climate-python314-runtime-inventory
+          path: |
+            production-python314-packages.json
+            artifacts/chart-presentation-python314
