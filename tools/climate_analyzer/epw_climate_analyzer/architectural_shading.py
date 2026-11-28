@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from .solar_shading import shaded_fraction, shading_ledger
+from .p3_comfort import numeric
 
 WALL="#D1D1CD"
 GLASS="#B6D7E4"
@@ -77,7 +78,7 @@ def shadow_polygons(azimuth,elevation,**geometry):
     w,h,o,l,r=_dimensions(geometry)
     rel=np.deg2rad(azimuth-geometry["facade"]);beta=np.deg2rad(elevation)
     n=np.cos(beta)*np.cos(rel)
-    if not np.isfinite([azimuth,elevation]).all() or elevation<=0 or n<=1e-10:return []
+    if not np.isfinite([azimuth,elevation]).all() or not 0<elevation<=90 or n<=1e-10:return []
     dx=np.cos(beta)*np.sin(rel)/n;dz=np.sin(beta)/n
     planes=[]
     if o>0:planes.append([(0,0,h),(w,0,h),(w,o,h),(0,o,h)])
@@ -141,7 +142,10 @@ def comparison_energy(df,cases,*,albedo):
     """Same coincident valid radiation intervals for all alternatives."""
     ledgers=[shading_ledger(df,albedo=albedo,**g) for _,g in cases]
     fields=["Unshaded total","Intercepted direct","Shaded total (direct-only)"]
-    valid=np.logical_and.reduce([np.isfinite(t[fields].to_numpy(float)).all(axis=1) for t in ledgers])
+    az=numeric(df,"solar_azimuth_deg").to_numpy(float)
+    el=90-numeric(df,"solar_apparent_zenith_deg").to_numpy(float)
+    valid=np.isfinite(az)&np.isfinite(el)&(el>=-90)&(el<=90)
+    valid &= np.logical_and.reduce([np.isfinite(t[fields].to_numpy(float)).all(axis=1)&(t["Unshaded total"].to_numpy(float)>=0)&(t["Unshaded direct"].to_numpy(float)>=0) for t in ledgers])
     if not valid.any():return None
     return [(float(t.loc[valid,"Intercepted direct"].sum()/1000),
              float(t.loc[valid,"Shaded total (direct-only)"].sum()/1000)) for t in ledgers]
