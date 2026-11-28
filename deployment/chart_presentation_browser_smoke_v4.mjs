@@ -534,8 +534,15 @@ try {
     },{mode,arrangement},{timeout:90000});
     return circularFrame.locator('.js-plotly-plot').first().evaluate(node=>{
       const data=node._fullData;
+      const filledBands=data.filter(t=>t.meta?.circular_contour_band);
+      let minAngle=Infinity,maxAngle=-Infinity,minRadius=Infinity,maxRadius=-Infinity;
+      for(const band of filledBands){
+        for(const v of band.theta){if(v!=null&&Number.isFinite(Number(v))){minAngle=Math.min(minAngle,Number(v));maxAngle=Math.max(maxAngle,Number(v));}}
+        for(const v of band.r){if(v!=null&&Number.isFinite(Number(v))){minRadius=Math.min(minRadius,Number(v));maxRadius=Math.max(maxRadius,Number(v));}}
+      }
       return {status:node._fullLayout.meta.ige_circular_contour_status,
-        bands:data.filter(t=>t.meta?.circular_contour_band).length,
+        extent:filledBands.length?[minAngle,maxAngle,minRadius,maxRadius]:null,
+        bands:filledBands.length,
         tiles:data.filter(t=>t.type==='barpolar').length,
         width:data.find(t=>t.meta?.circular_contour_lines).line.width,
         fills:node.querySelectorAll('.polarlayer .js-fill').length,
@@ -556,6 +563,12 @@ try {
     if(m.bounds[0]!==0||m.bounds[1]!==8759||m.width!==.25||m.status.periodic||
        (m.status.mode==='Contours'?(m.tiles!==0||m.fills<1||m.fillRules.some(v=>v!=='nonzero')):m.tiles!==1))
        throw new Error('Circular contour visual contract failed: '+JSON.stringify(m));
+  }
+  for(const m of [clockContours,calendarContours]){
+    assertNear(m.extent[0],0,1e-6,'Filled contour start reaches angular boundary');
+    assertNear(m.extent[1],360,1e-6,'Filled contour end reaches angular boundary');
+    assertNear(m.extent[2],.16,1e-6,'Filled contour reaches inner annulus');
+    assertNear(m.extent[3],1,1e-6,'Filled contour reaches outer annulus');
   }
   report.metrics.circularContours={clockHybrid,clockContours,calendarHybrid,calendarContours};
   report.checks.circularContours=true;
