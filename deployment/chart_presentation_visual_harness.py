@@ -50,6 +50,27 @@ install_global_chart_presentation(st)
 st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")
 
+if st.query_params.get("r222") == "1":
+    from epw_climate_analyzer.architectural_shading import window_geometry_3d
+    from epw_climate_analyzer.sensitivity_ui import geometry_panel
+    st.subheader("R2.22 architectural geometry harness")
+    idx=pd.date_range("2025-06-21 08:00",periods=9,freq="h")
+    df=pd.DataFrame({"solar_azimuth_deg":np.linspace(105.,255.,9),
+        "solar_apparent_zenith_deg":np.array([55,48,38,30,25,30,38,48,55],float),
+        "direct_normal_radiation_wh_m2":600.,"diffuse_horizontal_radiation_wh_m2":100.,
+        "dry_bulb_temperature_c":np.linspace(19.,29.,9)},index=idx)
+    df["global_horizontal_radiation_wh_m2"]=df["direct_normal_radiation_wh_m2"]*np.cos(np.deg2rad(df["solar_apparent_zenith_deg"]))+df["diffuse_horizontal_radiation_wh_m2"]
+    df.attrs["canonical_native_interval_minutes"]=60.
+    d=st.number_input("Actual overhang depth [m]",min_value=0.,max_value=2.,value=.6,step=.2,key="r222_fixture_overhang")
+    g=dict(facade=180.,width=2.,height=1.5,overhang=d,left_fin=.2,right_fin=.8)
+    st.plotly_chart(window_geometry_3d(**g),key="r222_fixture_actual")
+    counter=iter(range(10))
+    def render(f,note):
+        st.plotly_chart(f,key=f"r222_fixture_result_{next(counter)}")
+        st.caption(note)
+    geometry_panel(df,render,geometry=g,albedo=.2,key="r222_fixture")
+    st.stop()
+
 if st.query_params.get("severity") == "1":
     from epw_climate_analyzer.p4_extremes import events
     from epw_climate_analyzer.event_severity import bubble_figure

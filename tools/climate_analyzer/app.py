@@ -4137,8 +4137,11 @@ def _shading_geometry(prefix):
     from epw_climate_analyzer.shading_sketch import window_shading_sketch
     st.caption("Left/right are defined looking out from indoors. All depths project outward from the façade plane; zero depth means no device.")
     from epw_climate_analyzer.shading_findings import shading_mask_interpretation
-    st.plotly_chart(window_shading_sketch(**geometry),use_container_width=True,
-                    key=prefix+"_geometry_sketch",config={"displaylogo":False})
+    from epw_climate_analyzer.architectural_shading import window_geometry_3d
+    view=st.radio("Geometry view",["Interactive 3D","Plan and elevation"],horizontal=True,key=prefix+"_geometry_view")
+    preview=window_geometry_3d(**geometry) if view=="Interactive 3D" else window_shading_sketch(**geometry)
+    st.plotly_chart(preview,use_container_width=True,
+                    key=prefix+"_geometry_sketch_"+view,config={"displaylogo":False,"scrollZoom":True})
     st.caption(shading_mask_interpretation(geometry))
     return geometry
 
