@@ -127,6 +127,8 @@ def ensure_initialized():
                 if warmup:_warmup(warmup)
             except Exception as exc:
                 status="failed";error=type(exc).__name__+": "+str(exc)[:240]
+                import logging
+                logging.getLogger(__name__).exception("Core library initialization failed: %s",label)
             after=_sample()
             row={"stage":label,"status":status,"seconds":perf_counter()-start,"before":before,"after":after}
             if error:row["error"]=error
