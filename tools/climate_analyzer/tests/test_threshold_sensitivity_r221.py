@@ -111,7 +111,7 @@ class ThresholdSensitivityTests(unittest.TestCase):
         df=self.df
         direct=np.full(len(df),100.)
         geometry=dict(facade=180.,width=2.,height=1.5,overhang=.6,left_fin=0.,right_fin=0.)
-        ledger=pd.DataFrame({"Unshaded direct":direct,"Intercepted direct":direct*shaded_fraction(df.solar_azimuth_deg,90-df.solar_apparent_zenith_deg,**geometry)},index=df.index)
+        ledger=pd.DataFrame({"Unshaded direct":direct,"Unshaded total":direct+20.,"Intercepted direct":direct*shaded_fraction(df.solar_azimuth_deg,90-df.solar_apparent_zenith_deg,**geometry)},index=df.index)
         with patch("epw_climate_analyzer.solar_shading.shading_ledger",return_value=ledger) as mock:
             f,note=shading_geometry_figure(df,[0.,.6,1.],[0.,.5,1.],geometry=geometry)
             self.assertEqual(mock.call_count,1)
