@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import plotly.graph_objects as go
 from epw_climate_analyzer.circular_heatmap import eligible, contour_eligible, CALENDAR_ANGLE, CLOCK_ANGLE
-from epw_climate_analyzer.circular_contours import prepare_grid, STATUS, has_valid_quad, _polar_path
+from epw_climate_analyzer.circular_contours import prepare_grid, STATUS, has_valid_quad, _polar_path, extend_display_edges
 from epw_climate_analyzer.heatmap_presentation import apply_heatmap_presentation, TILES, HYBRID, CONTOURS
 from epw_climate_analyzer.figure_interpretation_contract import bind_figure_interpretation, validate_figure_interpretation
 
@@ -52,6 +52,37 @@ class CircularContourTests(unittest.TestCase):
         sparse=np.full((4,4),np.nan)
         sparse[0,0]=1;sparse[0,1]=2;sparse[1,0]=3
         self.assertFalse(has_valid_quad(sparse))
+
+    def test_chronological_edges_cover_display_without_bridging_midnight(self):
+        # Distinct first and last hours must remain distinct at the common
+        # physical seam. A genuinely missing edge cell must remain masked.
+        grid=np.arange(3*24,dtype=float).reshape(3,24)
+        grid[1,0]=np.nan
+        x,y,z=extend_display_edges(np.arange(24)+.5,np.arange(3)+.5,grid,24,3,False)
+        np.testing.assert_array_equal(x[[0,-1]],[0.,24.])
+        np.testing.assert_array_equal(y[[0,-1]],[0.,3.])
+        np.testing.assert_array_equal(z[1:-1,0],grid[:,0])
+        np.testing.assert_array_equal(z[1:-1,-1],grid[:,-1])
+        np.testing.assert_array_equal(z[1:-1,1:-1],grid)
+        self.assertTrue(np.isnan(z[2,0]))
+        self.assertNotEqual(z[1,0],z[1,-1])
+
+    def test_filled_chronological_calendar_reaches_full_circle_and_radial_edges(self):
+        f=self.fixture()
+        f.update_xaxes(title="Day of year")
+        f.data[0].x=[f"2026-01-{i:02d}" for i in range(1,13)]
+        apply_heatmap_presentation(f,CONTOURS,geometry="Circular",arrangement=CLOCK_ANGLE,interval=5.)
+        status=f.layout.meta[STATUS]
+        self.assertEqual(status["mode"],CONTOURS)
+        self.assertFalse(status["periodic"])
+        bands=[t for t in f.data if isinstance(t.meta,dict) and t.meta.get("circular_contour_band")]
+        angles=[a for t in bands for a in t.theta if a is not None]
+        radii=[r for t in bands for r in t.r if r is not None]
+        self.assertAlmostEqual(min(angles),0.)
+        self.assertAlmostEqual(max(angles),360.)
+        self.assertAlmostEqual(min(radii),.16)
+        # Days outside the selected 12-day interval remain masked.
+        self.assertLess(max(radii),.16+.84*13/365)
 
     def test_angular_path_is_unwrapped_and_tessellated(self):
         theta,r=_polar_path([[11.5,4.5],[12.5,4.5]],12,24)

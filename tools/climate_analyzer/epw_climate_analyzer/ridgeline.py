@@ -17,7 +17,7 @@ from .climate_model import aggregation_semantics_for
 
 
 def ridgeline_figure(df, column, unit, label, *, grouping="Monthly",
-                     bins=40, quantiles=True, wet_only=False):
+                     bins=40, quantiles=True, wet_only=False, latitude=None):
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("Dated source observations are required.")
     if aggregation_semantics_for(column) == "circular mean" or "direction" in column:
@@ -38,9 +38,18 @@ def ridgeline_figure(df, column, unit, label, *, grouping="Monthly",
         groups = [(calendar.month_name[m], values.loc[month == m])
                   for m in range(1, 13)]
     else:
+        try:
+            lat = float(latitude)
+            known_hemisphere = np.isfinite(lat) and -90 <= lat <= 90 and lat != 0
+        except (TypeError, ValueError):
+            lat, known_hemisphere = 0., False
+        names = (("Summer", "Autumn", "Winter", "Spring") if lat < 0
+                 else ("Winter", "Spring", "Summer", "Autumn"))
+        if not known_hemisphere:
+            names = ("Dec–Feb", "Mar–May", "Jun–Aug", "Sep–Nov")
         groups = [(name, values.loc[month.isin(months)])
-                  for name, months in (("DJF", (12, 1, 2)), ("MAM", (3, 4, 5)),
-                                       ("JJA", (6, 7, 8)), ("SON", (9, 10, 11)))]
+                  for name, months in zip(names, ((12, 1, 2), (3, 4, 5),
+                                                   (6, 7, 8), (9, 10, 11)))]
     groups = [(name, s.to_numpy(dtype=float)) for name, s in groups if len(s)]
     lo, hi = float(values.min()), float(values.max())
     if lo == hi:
