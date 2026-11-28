@@ -169,19 +169,23 @@ def calculate(df,kind,x,y,*,fixed=None,basis="hours"):
     if invalid is not None:z=np.where(invalid,np.nan,z)
     return z,float(valid.sum()*dt)
 
-def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False,basis="hours"):
+def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False,basis="hours",relative=False):
     spec=SPECS[kind];x,y=_axis(x),_axis(y)
     hours,denom=calculate(df,kind,x,y,fixed=fixed,basis=basis)
-    values=hours/denom*100 if percentage else hours
-    amount_unit="nights" if basis=="nights" else "h"
-    unit="%" if percentage else amount_unit
-    f=go.Figure(go.Heatmap(x=x,y=y,z=values,customdata=hours,hoverongaps=False,
-        colorscale="Oranges" if kind=="surface" else NV_SUITABILITY_COLORSCALE,zmin=0,zmax=100 if percentage else denom,
-        colorbar=dict(title=f"{spec.result} [{unit}]"),
-        hovertemplate="%{x:.2f} · %{y:.2f}<br>"+spec.result+": %{z:,.2f} "+unit+"<br>Eligible: %{customdata:,.1f} "+amount_unit+"<extra></extra>",
-        meta={"heatmap_semantics":"continuous","heatmap_quantity":"threshold sensitivity"}))
     ref=tuple(reference or spec.reference)
     ref_hours=float(calculate(df,kind,[ref[0]],[ref[1]],fixed=fixed,basis=basis)[0][0,0])
+    if relative and not np.isfinite(ref_hours):
+        raise ValueError("Select an admissible reference configuration for relative results.")
+    values=hours-ref_hours if relative else hours/denom*100 if percentage else hours
+    amount_unit="nights" if basis=="nights" else "h"
+    unit="%" if percentage and not relative else amount_unit
+    scale=max(float(np.nanmax(np.abs(values))) if np.isfinite(values).any() else 0.,1.) if relative else None
+    f=go.Figure(go.Heatmap(x=x,y=y,z=values,customdata=hours,hoverongaps=False,
+        colorscale="RdBu" if relative else "Oranges" if kind=="surface" else NV_SUITABILITY_COLORSCALE,
+        zmin=-scale if relative else 0,zmax=scale if relative else 100 if percentage else denom,
+        colorbar=dict(title=f"Change from reference [{unit}]" if relative else f"{spec.result} [{unit}]"),
+        hovertemplate=spec.x_label+": %{x:.2f}<br>"+spec.y_label+": %{y:.2f}<br>"+("Change from reference" if relative else spec.result)+": %{z:,.2f} "+unit+"<br>Total qualifying: %{customdata:,.1f} "+amount_unit+"<extra></extra>",
+        meta={"heatmap_semantics":"continuous","heatmap_quantity":"threshold sensitivity"}))
     if np.isfinite(ref_hours) and x[0]<=ref[0]<=x[-1] and y[0]<=ref[1]<=y[-1]:
         f.add_scatter(x=[ref[0]],y=[ref[1]],mode="markers",name="Active reference",
             marker=dict(symbol="circle-open",size=13,color="#202020",line=dict(width=2)),
@@ -208,11 +212,12 @@ def figure(df,kind,x,y,*,fixed=None,reference=None,percentage=False,basis="hours
     if kind=="economizer":note+="The fixed minimum outdoor temperature and strict enthalpy comparison are retained. "
     if kind=="neutral":note+="The neutral interval includes both temperature boundaries and describes the temperature-only band between heating and cooling thresholds. "
     if np.isnan(hours).any():note+="Grey cells indicate inadmissible threshold combinations. "
+    if relative:note+="Positive values indicate more qualifying duration or nights than the reference; negative values indicate fewer. "
     note+="Results quantify climatic opportunities or exposure under the stated screening assumptions."
     return f,note
 
 
-def shading_geometry_figure(df,x,y,*,geometry,albedo=None,percentage=False):
+def shading_geometry_figure(df,x,y,*,geometry,albedo=None,percentage=False,quantity=None,candidate=None):
     """Sweep overhang and symmetric fin depths, holding aperture/orientation fixed.
 
     Reuse one direct-beam plane-of-array field. The analytical aperture-area
@@ -228,40 +233,58 @@ def shading_geometry_figure(df,x,y,*,geometry,albedo=None,percentage=False):
     base=dict(geometry)
     ledger=shading_ledger(df,albedo=albedo,**base)
     direct=ledger["Unshaded direct"].to_numpy(dtype=float)
-    valid=np.isfinite(direct)&(direct>=0)&np.isfinite(az)&np.isfinite(el)&(el>=-90)&(el<=90)
+    global_total=ledger["Unshaded total"].to_numpy(dtype=float)
+    valid=np.isfinite(direct)&(direct>=0)&np.isfinite(global_total)&(global_total>=0)&np.isfinite(az)&np.isfinite(el)&(el>=-90)&(el<=90)
     if not valid.any():raise ValueError("No complete coincident direct-beam and solar-position observations.")
     observed_hours=float(valid.sum()*dt)
     az,el,direct=az[valid],el[valid],direct[valid]
     total=float(direct.sum()/1000.)
+    incident_total=float(global_total[valid].sum()/1000.)
+    quantity=quantity or ("direct_percent" if percentage else "intercepted")
+    if quantity not in ("remaining","intercepted","direct_percent","total_percent"):
+        raise ValueError("Unknown shading result quantity.")
     # Bound total evaluations; multi-year archives can reduce grid resolution.
     if len(direct)*len(x)*len(y)>30_000_000:
         raise ValueError("Reduce geometry grid resolution or select a shorter observation period.")
-    if percentage and total<=0:raise ValueError("No incident direct irradiation for percentage reduction.")
+    if quantity=="direct_percent" and total<=0:raise ValueError("No incident direct irradiation for percentage reduction.")
+    if quantity=="total_percent" and incident_total<=0:raise ValueError("No incident total irradiation for percentage reduction.")
     matrix=np.empty((len(y),len(x)))
     for i,fin in enumerate(y):
         for j,overhang in enumerate(x):
             candidate={**base,"overhang":float(overhang),"left_fin":float(fin),"right_fin":float(fin)}
             matrix[i,j]=np.dot(direct,shaded_fraction(az,el,**candidate))/1000.
-    z=100*matrix/total if percentage else matrix
-    unit="%" if percentage else "kWh/m²"
-    f=go.Figure(go.Heatmap(x=x,y=y,z=z,customdata=matrix,colorscale="YlOrBr",zmin=0,
-        zmax=100 if percentage else max(total,1e-12),hoverongaps=False,
-        colorbar=dict(title=f"Intercepted direct [{unit}]"),
-        hovertemplate="Overhang %{x:.2f} m · each fin %{y:.2f} m<br>Intercepted direct: %{z:,.2f} "+unit+"<extra></extra>",
-        meta={"heatmap_semantics":"continuous","heatmap_quantity":"intercepted direct irradiation"}))
+    remaining=incident_total-matrix
+    z,label,upper={
+        "remaining":(remaining,"Remaining total irradiation",incident_total),
+        "intercepted":(matrix,"Intercepted direct irradiation",total),
+        "direct_percent":(100*matrix/total if total>0 else matrix,"Direct irradiation reduction",100),
+        "total_percent":(100*matrix/incident_total if incident_total>0 else matrix,"Total irradiation reduction",100)
+    }[quantity]
+    unit="%" if quantity.endswith("percent") else "kWh/m²"
+    f=go.Figure(go.Heatmap(x=x,y=y,z=z,customdata=np.stack([matrix,remaining],axis=-1),colorscale="YlOrBr",zmin=0,
+        zmax=max(upper,1e-12),hoverongaps=False,
+        colorbar=dict(title=f"{label} [{unit}]"),
+        hovertemplate="Overhang %{x:.2f} m · each fin %{y:.2f} m<br>"+label+": %{z:,.2f} "+unit+"<br>Intercepted: %{customdata[0]:,.2f} kWh/m²<br>Remaining: %{customdata[1]:,.2f} kWh/m²<extra></extra>",
+        meta={"heatmap_semantics":"continuous","heatmap_quantity":label}))
     ref=base.get("overhang",0.),base.get("left_fin",0.)
     symmetric=np.isclose(ref[1],base.get("right_fin",0.))
     if symmetric and x[0]<=ref[0]<=x[-1] and y[0]<=ref[1]<=y[-1]:
         f.add_scatter(x=[ref[0]],y=[ref[1]],mode="markers",name="Active reference",
             marker=dict(symbol="circle-open",size=13,color="#202020",line=dict(width=2)))
-    f.update_layout(title="Shading geometry · overhang and symmetric fins",
+    if candidate is not None:
+        cx,cy=map(float,candidate)
+        if x[0]<=cx<=x[-1] and y[0]<=cy<=y[-1]:
+            f.add_scatter(x=[cx],y=[cy],mode="markers",name="Selected candidate",
+                marker=dict(symbol="diamond-open",size=15,color="#2563EB",line=dict(width=2)))
+    f.update_layout(title=label+" · overhang and symmetric fins",
         xaxis_title="Overhang depth [m]",yaxis_title="Depth of each side fin [m]",
         template="plotly_white",height=520,meta={"layout_kind":"threshold_sensitivity"})
     actual=float(ledger["Intercepted direct"].to_numpy(dtype=float)[valid].sum()/1000.)
-    note=(f"The selected façade and aperture receive {total:,.2f} kWh/m² of direct irradiation across "
+    note=(f"The unshaded aperture receives {incident_total:,.2f} kWh/m² total, including {total:,.2f} kWh/m² direct irradiation across "
           f"{observed_hours:,.1f} valid observation hours. The parameter grid intercepts "
           f"{matrix.min():,.2f}–{matrix.max():,.2f} kWh/m². "
-          f"The active geometry intercepts {actual:,.2f} kWh/m². "
+          f"Remaining irradiation ranges from {remaining.min():,.2f} to {remaining.max():,.2f} kWh/m². "
+          f"The active geometry intercepts {actual:,.2f} kWh/m² and retains {incident_total-actual:,.2f} kWh/m². "
           "Each cell uses equal left and right fin depths and the specified overhang; aperture dimensions and façade azimuth remain fixed. "
           "Percentages refer to incident direct-beam irradiation. Diffuse and ground-reflected components retain the existing direct-only shading model.")
     if not symmetric:note+=" The active geometry has unequal fin depths and is outside this symmetric-fin parameter family."
