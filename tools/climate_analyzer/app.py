@@ -2213,7 +2213,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         quantiles=st.checkbox("Show median and P05–P95",value=True,key=key_prefix+"_ridge_quantiles")
         wet_only=(st.radio("Distribution basis",["Wet intervals only","All intervals including dry periods"],horizontal=True,key=key_prefix+"_ridge_wet")=="Wet intervals only" if column=="liquid_precipitation_depth_mm" else False)
         try:
-            fig,note=ridgeline_figure(df,column,unit,LABELS.get(column,column.replace("_"," ")),grouping=grouping,bins=bins,quantiles=quantiles,wet_only=wet_only)
+            fig,note=ridgeline_figure(df,column,unit,LABELS.get(column,column.replace("_"," ")),grouping=grouping,bins=bins,quantiles=quantiles,wet_only=wet_only,latitude=st.session_state.get("_p6_report_context",{}).get("latitude"))
         except ValueError as exc:
             st.info(str(exc));return
         render_plot(fig,note)
