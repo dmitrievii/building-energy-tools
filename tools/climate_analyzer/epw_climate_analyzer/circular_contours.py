@@ -45,6 +45,22 @@ def prepare_grid(admitted, layout_meta, arrangement):
     return x, y, data, angular_count, radial_count, periodic
 
 
+def extend_display_edges(x, y, grid, angular_count, radial_count, periodic):
+    """Cover boundary half-cells without cross-seam interpolation.
+
+    ContourPy operates on cell centres; duplicate each outermost
+    observation to its own display edge. Missing boundary samples stay
+    masked. A periodic angular grid already covers one full cycle.
+    This constant edge extension changes no source observation.
+    """
+    if not periodic:
+        x = np.r_[0., x, float(angular_count)]
+        grid = np.pad(grid, ((0, 0), (1, 1)), mode="edge")
+    y = np.r_[0., y, float(radial_count)]
+    grid = np.pad(grid, ((1, 1), (0, 0)), mode="edge")
+    return x, y, grid
+
+
 def has_valid_quad(z):
     v = np.isfinite(z)
     return bool((v[:-1,:-1] & v[1:,:-1] & v[:-1,1:] & v[1:,1:]).any())
@@ -100,6 +116,7 @@ def build_layers(fig, admitted, arrangement, *, mode, levels, labels, width, con
     t, z, _, _, _ = admitted
     x,y,grid,angular_count,radial_count,periodic = prepare_grid(admitted,_meta(fig.layout),arrangement)
     if not has_valid_quad(grid):raise ValueError("No complete neighbouring cells for circular contours.")
+    x,y,grid=extend_display_edges(x,y,grid,angular_count,radial_count,periodic)
     g = contourpy.contour_generator(x=x,y=y,z=np.ma.masked_invalid(grid),
         name="serial",corner_mask=False,line_type="Separate",fill_type="OuterOffset")
     finite = z[np.isfinite(z)]
