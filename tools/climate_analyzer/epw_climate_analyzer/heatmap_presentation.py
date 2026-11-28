@@ -77,7 +77,7 @@ def _ordered_grid(values,n,axis):
     # not ordered physical interpolation coordinates.
     return False
 
-def _eligible(fig,trace):
+def _eligible(fig,trace,*,check_grid=True):
     if trace.type!="heatmap" or trace.visible in (False,"legendonly"):return None
     meta=_meta(trace);layout_meta=_meta(fig.layout)
     if meta.get("presentation_only_trace") or meta.get("heatmap_semantics") in ("categorical","binary","circular","mask"):
@@ -114,9 +114,9 @@ def _eligible(fig,trace):
     if np.all((finite==0)|(finite==1)):return None
     # Contouring requires at least one full valid 2×2 cell, and ordered axes.
     valid=np.isfinite(z)
-    if not (valid[:-1,:-1]&valid[1:,:-1]&valid[:-1,1:]&valid[1:,1:]).any():return None
-    if not _ordered_grid(trace.x,z.shape[1],_axis(fig,trace,"x")):return None
-    if not _ordered_grid(trace.y,z.shape[0],_axis(fig,trace,"y")):return None
+    if check_grid and not (valid[:-1,:-1]&valid[1:,:-1]&valid[:-1,1:]&valid[1:,1:]).any():return None
+    if check_grid and not _ordered_grid(trace.x,z.shape[1],_axis(fig,trace,"x")):return None
+    if check_grid and not _ordered_grid(trace.y,z.shape[0],_axis(fig,trace,"y")):return None
     # This version leaves mixed categorical masks and annotated matrices as
     # tiles; their exact cell presentation is important.
     if trace.texttemplate:return None
@@ -152,7 +152,12 @@ def _restore(fig):
             t.showscale=old.get("showscale")
             t.meta=old.get("meta")
 
-def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=CONTOUR_DEFAULT_WIDTH,contrast="Auto"):
+def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=CONTOUR_DEFAULT_WIDTH,contrast="Auto",geometry="Cartesian",arrangement="Calendar angle"):
+    from . import circular_heatmap as circular
+    circular.restore(fig)
+    if geometry==circular.CIRCULAR:
+        _restore(fig)
+        return circular.apply(fig,arrangement,mode=mode,interval=interval,labels=labels,width=width,contrast=contrast)
     if mode not in MODES:mode=TILES
     # Avoid any data scan/allocation in the default path on ordinary figures.
     if not any(_meta(t).get(LAYER) or _meta(t).get(ORIGINAL) for t in fig.data) and mode==TILES:return fig

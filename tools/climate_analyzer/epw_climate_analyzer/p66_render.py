@@ -42,9 +42,8 @@ def _event_figure(table,series,style,threshold,above,unit,quantity,step=None):
         return event_timeline_figure(table,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
     if table.empty:raise NotApplicable("No qualifying events; the timeline remains available.")
     if style=="intensity":
-        f=go.Figure(go.Scatter(x=table.duration,y=table.peak,mode="markers",marker_color=event_color(quantity,above),customdata=table.excess,
-            hovertemplate="Duration %{x}<br>Peak %{y}<br>Integrated excess %{customdata}<extra></extra>"))
-        return f.update_layout(template="plotly_white",xaxis_title=f"Duration [{unit}]",yaxis_title=quantity)
+        from .event_severity import bubble_figure
+        return bubble_figure(table,unit=unit,threshold=threshold,above=above,quantity=quantity)
     f=_bars(table.duration.value_counts().sort_index().rename("Number of events"),"Duration distribution","Events")
     f.update_traces(marker_color=event_color(quantity,above))
     return f.update_xaxes(title=f"Duration [{unit}]")
@@ -111,6 +110,43 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")
         if a[0]=="wet":note+=" Positive precipitation intervals only."
+    elif k in ("cumulative_resource","cumulative_degree","cumulative_nv"):
+        from .cumulative_resources import extensive_profile,degree_profile,ventilation_profile
+        from .figure_interpretation_contract import bind_figure_interpretation
+        try:
+            if k=="cumulative_resource":f,note=extensive_profile(df,c)
+            elif k=="cumulative_degree":f,note=degree_profile(df)
+            else:f,note=ventilation_profile(df)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
+    elif k=="climate_anomaly":
+        from .climate_anomalies import figure
+        from .figure_interpretation_contract import bind_figure_interpretation
+        if reference_df is None:raise NotApplicable("A historical reference archive is required.")
+        try:f,note,_=figure(df,reference_df,c,a[0],a[1],a[2],year=a[3])
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
+    elif k in ("threshold_sensitivity","shading_geometry_sensitivity"):
+        from .threshold_sensitivity import SPECS,figure,shading_geometry_figure
+        from .figure_interpretation_contract import bind_figure_interpretation
+        try:
+            if k=="threshold_sensitivity":
+                spec=SPECS[a[0]]
+                f,note=figure(df,a[0],np.linspace(*spec.x_range,21),np.linspace(*spec.y_range,21))
+            else:
+                f,note=shading_geometry_figure(df,np.linspace(0,2,11),np.linspace(0,2,11),geometry=cat.GEOMETRY)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
+    elif k=="ridgeline":
+        from .ridgeline import ridgeline_figure
+        from .figure_interpretation_contract import bind_figure_interpretation
+        try:f,note=ridgeline_figure(df,c,u,cat.LABELS[c],grouping=a[0],wet_only=a[1]=="wet")
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        bind_figure_interpretation(f,note)
+        return f,note
     elif k=="diurnal":
         table=memo(("diurnal",c),lambda:ex.diurnal_statistics(df,c))
         f=ex.diurnal_figure(table,c,u,representation=a[0],centre=a[1],band=a[2])
@@ -154,9 +190,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="temp_events":
         stat,above,style=a;threshold=30. if above else 0.
         daily,ev=memo(("temp_events",stat,above),lambda:p4.temperature_events(df,threshold=threshold,above=above,minimum=3,stat=stat))
-        f=_event_figure(ev,daily[stat],style,threshold,above,"days","Daily temperature [°C]")
+        quantity=f"Daily { {'max':'maximum','mean':'mean','min':'minimum'}[stat]} temperature [°C]"
+        f=_event_figure(ev,daily[stat],style,threshold,above,"days",quantity)
         from .p4_ui import event_interpretation
-        note=event_interpretation(ev,unit="days")
+        from .event_severity import bubble_note
+        note=event_interpretation(ev,unit="days",extra_note=bubble_note(ev,unit="days",above=above,quantity=quantity) if style=="intensity" else "")
     elif k=="day_indicators":
         f=_bars(p4.day_indicators(df).resample("MS").sum(min_count=1),title,u)
         from .temperature_findings import temperature_figure_interpretation
@@ -167,8 +205,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=f" Reference guide pressure {p:,.0f} Pa; chart coordinates use existing source-derived psychrometrics."
     elif k=="persistence":
         threshold,above,style=a;step=p4.cadence(df)
+        from .relationship_findings import LABELS as RELATIONSHIP_LABELS
+        quantity=RELATIONSHIP_LABELS.get(c,f"{cat.LABELS.get(c,c)} [{u}]")
+        s=p4.valid_values(df,c,True)
         ev=memo(("persistence",c,threshold,above),lambda:p4.events(s,threshold=threshold,above=above,minimum=3,step=step))
-        f=_event_figure(ev,s,style,threshold,above,"hours",cat.LABELS.get(c,u),step=step)
+        f=_event_figure(ev,s,style,threshold,above,"hours",quantity,step=step)
         from .p4_ui import event_interpretation
         if d.chapter==cat.HUM:
             from .humidity_findings import humidity_figure_interpretation
@@ -176,6 +217,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         else:
             from .wind_findings import wind_figure_interpretation
             extra=wind_figure_interpretation(df,None,"persistence",column=c,args=(threshold,above))
+        if style=="intensity":
+            from .event_severity import bubble_note
+            extra=(extra+" "+bubble_note(ev,unit="hours",above=above,quantity=quantity)).strip()
         note=event_interpretation(ev,unit="hours",extra_note=extra)
     elif k=="condensation":
         from .p3_ui import duration_ledger_figure
@@ -250,7 +294,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_event_figure(ev,daily["sum"],style,1.,wet,"days","Daily precipitation [mm]")
         from .p4_ui import event_interpretation
         from .precipitation_findings import wet_dry_interpretation
-        note=event_interpretation(ev,unit="days",extra_note=wet_dry_interpretation(df,wet=wet,threshold=1.,minimum=1))
+        extra=wet_dry_interpretation(df,wet=wet,threshold=1.,minimum=1)
+        if style=="intensity":
+            from .event_severity import bubble_note
+            extra=(extra+" "+bubble_note(ev,unit="days",above=wet,quantity="Daily precipitation [mm]")).strip()
+        note=event_interpretation(ev,unit="days",extra_note=extra)
     elif k=="rolling":
         v=p4.rolling_windows(df,c,a[0],total=True,nonnegative=True)
         if not v.notna().any():raise NotApplicable("No complete rolling windows.")

@@ -50,6 +50,47 @@ install_global_chart_presentation(st)
 st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")
 
+if st.query_params.get("severity") == "1":
+    from epw_climate_analyzer.p4_extremes import events
+    from epw_climate_analyzer.event_severity import bubble_figure
+    from epw_climate_analyzer.cumulative_resources import extensive_profile
+    s=pd.Series([31.,32.,20.,34.,35.,20.,30.],index=pd.date_range("2026-07-01",periods=7,freq="D"))
+    ev=events(s,threshold=30.,daily=True)
+    st.plotly_chart(bubble_figure(ev,unit="days",threshold=30.,above=True,quantity="Daily maximum temperature [°C]"),key="severity_fixture")
+    idx=pd.to_datetime(["2025-12-01","2026-01-01","2026-03-01"])
+    data=pd.DataFrame({"global_horizontal_radiation_wh_m2":[100000.,200000.,300000.]},index=idx)
+    data.attrs["canonical_native_resolution"]="monthly"
+    f,note=extensive_profile(data,"global_horizontal_radiation_wh_m2")
+    st.plotly_chart(f,key="cumulative_fixture")
+    st.caption(note)
+    st.stop()
+
+if st.query_params.get("anomalies") == "1":
+    from epw_climate_analyzer.climate_anomalies import figure,VIEWS
+    idx=pd.date_range("1991-01-01","2021-12-01",freq="MS")
+    t=10+8*np.sin((idx.month-3)*2*np.pi/12)+.12*(idx.year-1991)
+    df=pd.DataFrame({"dry_bulb_temperature_c":t},index=idx)
+    df.attrs.update(canonical_calendar_mode="historical",canonical_native_resolution="monthly")
+    target=df.loc["2016":]
+    for i,view in enumerate(VIEWS):
+        f,note,_=figure(target,df,"dry_bulb_temperature_c",1991,2020,view,year=2021)
+        st.plotly_chart(f,key=f"anomaly_{i}")
+        st.caption(note)
+    st.stop()
+
+if st.query_params.get("circular") == "1":
+    import plotly.graph_objects as go
+    st.subheader("Circular calendar geometry harness")
+    z=np.arange(24*365,dtype=float).reshape(24,365)
+    z[7,3]=np.nan
+    f=go.Figure(go.Heatmap(x=pd.date_range("2026-01-01",periods=365,freq="D").strftime("%Y-%m-%d"),
+        y=np.arange(24),z=z,coloraxis="coloraxis"))
+    f.update_layout(title="Daily calendar · original source cells",xaxis_title="Day of year",yaxis_title="Hour of day",
+        coloraxis=dict(colorscale="Viridis",cmin=0,cmax=8759,colorbar=dict(title="°C")),
+        meta={"period_source_years":[2026,2026]},height=420)
+    st.plotly_chart(f,key="circular_calendar_fixture")
+    st.stop()
+
 if st.query_params.get("p2") == "1":
     from epw_climate_analyzer.directional_climate import directional_class_table,directional_class_figure
     from epw_climate_analyzer.sky_distribution import cumulative_sky,sky_figure

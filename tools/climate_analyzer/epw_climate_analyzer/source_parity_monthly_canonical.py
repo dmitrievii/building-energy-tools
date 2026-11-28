@@ -95,6 +95,7 @@ def monthly_analysis_frame(dataset: Any) -> pd.DataFrame:
     frame.attrs["geosphere_monthly_canonical_aliases"] = aliases
     frame.attrs["canonical_frame_role"] = "native-monthly"
     frame.attrs["canonical_native_resolution"] = "monthly"
+    frame.attrs["canonical_calendar_mode"] = dataset.temporal.calendar_mode
     frame.attrs["canonical_analysis_resolution"] = "monthly"
     return frame
 
@@ -213,6 +214,7 @@ def monthly_page_names(groups: Mapping[str, list[str]]) -> tuple[str, ...]:
             pages.append(page)
     if groups.get("Time Series and Overlay"):
         pages.append("Time Series and Overlay")
+        pages.append("Climate Anomalies")
     pages.append("Report")
     pages.append("Data Quality")
     return tuple(pages)
@@ -474,6 +476,10 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         return
     if page == "Data Quality":
         _render_monthly_quality(legacy, dataset)
+        return
+    if page == "Climate Anomalies":
+        from .anomaly_ui import panel
+        panel(st,filtered,full,legacy.render_plot)
         return
     if page == "Time Series and Overlay":
         # There is intentionally no monthly Plotly renderer here. The source

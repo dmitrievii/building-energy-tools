@@ -32,8 +32,14 @@ class SourceParityAudit072Tests(unittest.TestCase):
             index=index,
         )
         pages = set(available_historical_pages(frame))
-        expected_missing = {"Compare Climates"}
+        # Raw variable capabilities alone do not establish historical-reference
+        # provenance. The source-aware route admits Climate Anomalies only for
+        # a declared historical calendar, independently of the variable gate.
+        expected_missing = {"Compare Climates", "Climate Anomalies"}
         self.assertEqual(set(NAVIGATION_PAGES) - pages, expected_missing)
+        route=(ROOT/"epw_climate_analyzer"/"source_parity_ui.py").read_text(encoding="utf-8")
+        self.assertIn('if dataset.temporal.calendar_mode=="historical":supported.add("Climate Anomalies")',route)
+        self.assertIn("panel(st,filtered_df,full_df,legacy.render_plot)",route)
 
     def test_natural_ventilation_and_hvac_are_wired_for_historical_data(self) -> None:
         mapped = {spec.canonical_name for spec in FIELD_SPEC_BY_PROVIDER.values()}

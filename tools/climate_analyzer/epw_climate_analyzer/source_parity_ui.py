@@ -860,6 +860,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     supported.add("Sky and Daylight")  # geometry requires date + latitude only
     supported.add("Compare Climates")
     supported.add("Report")
+    if dataset.temporal.calendar_mode=="historical":supported.add("Climate Anomalies")
     pages = tuple(page for page in legacy.NAVIGATION_PAGES if page in supported)
     if legacy.NAVIGATION_KEY not in st.session_state or st.session_state[legacy.NAVIGATION_KEY] not in pages:
         st.session_state[legacy.NAVIGATION_KEY] = "Overview"
@@ -898,7 +899,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         return
 
     has_psych = _numeric(prepared_dataset.data, "dry_bulb_temperature_c") and _numeric(prepared_dataset.data, "relative_humidity_pct")
-    include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Outdoor Thermal Comfort", "Overview", "Report"}
+    include_psych = has_psych and page in {"Climate Anomalies", "Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Outdoor Thermal Comfort", "Overview", "Report"}
     include_solar = page in {"Solar and Radiation", "Overview", "Shading analysis", "Outdoor Thermal Comfort", "Report"}
 
     # The default monthly humidity-ratio plot needs only T, RH and pressure.
@@ -1044,6 +1045,9 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         legacy.render_precipitation(filtered_df, native_df=native)
     elif page == "Time Series and Overlay":
         legacy.render_time_series_overlay(filtered_df)
+    elif page == "Climate Anomalies":
+        from .anomaly_ui import panel
+        panel(st,filtered_df,full_df,legacy.render_plot)
     else:
         _render_quality_decoded(legacy, legacy._source_parity_original_quality, dataset, filtered_df)
 

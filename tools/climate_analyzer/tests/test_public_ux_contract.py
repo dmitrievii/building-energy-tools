@@ -29,7 +29,8 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("building design", APP_TAGLINE.lower())
 
     def test_navigation_contract_is_complete_and_unique(self) -> None:
-        self.assertEqual(len(NAVIGATION_PAGES), 16)
+        self.assertEqual(len(NAVIGATION_PAGES), 17)
+        self.assertIn("Climate Anomalies", NAVIGATION_PAGES)
         self.assertEqual(navigation_label("Report"),"Report — Climate assessment")
         self.assertEqual(navigation_label("Outdoor Thermal Comfort"),"Design — Outdoor thermal comfort")
         self.assertEqual(navigation_label("Shading analysis"),"Design — Shading analysis")

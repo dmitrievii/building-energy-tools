@@ -108,7 +108,7 @@ def format_heatmap_cell(fig, trace, position, df=None):
     year = int(y) if is_year else source_year(df)
     label = str(x)
     try:
-        if period in ("day", "daily"):
+        if period in ("day", "daily", "day of year", "date", "calendar day") or period.startswith(("calendar day ·","day of year ·")):
             if re.fullmatch(r"\d{4}-\d{2}-\d{2}", label) or isinstance(x, (date, datetime, np.datetime64)):
                 label = pd.Timestamp(x).strftime("%d.%m.%Y")
             elif re.fullmatch(r"\d{1,3}", label) and 1 <= int(label) <= 366:
@@ -118,7 +118,7 @@ def format_heatmap_cell(fig, trace, position, df=None):
                     # An interannual empty leap-day cell is not a valid date.
                     date(year, stamp.month, stamp.day)
                     label += f".{year:04d}"
-        elif period in ("week", "weekly"):
+        elif period in ("week", "weekly", "week of year", "iso week") or period.startswith("iso week ·"):
             match = re.fullmatch(r"(?:(\d{4})-)?W?(\d{1,2})", label, re.I)
             if match and 1 <= int(match.group(2)) <= 53:
                 # A pooled ISO-week slot need not belong to the calendar year

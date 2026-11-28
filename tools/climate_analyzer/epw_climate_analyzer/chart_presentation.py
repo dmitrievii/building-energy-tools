@@ -90,6 +90,8 @@ class ChartPresentationSettings:
     axis_title: str = ""
     axis_min: float = 0.0
     axis_max: float = 100.0
+    heatmap_geometry: str = "Cartesian"
+    heatmap_arrangement: str = "Calendar angle"
     heatmap_mode: str = "Tiles"
     contour_interval: float = 0.0
     contour_labels: bool = True
@@ -507,7 +509,8 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     apply_monthly_axes(fig,width_px=width)
     from .heatmap_presentation import apply_heatmap_presentation
     apply_heatmap_presentation(fig,settings.heatmap_mode,interval=settings.contour_interval,
-        labels=settings.contour_labels,width=settings.contour_width,contrast=settings.contour_contrast)
+        labels=settings.contour_labels,width=settings.contour_width,contrast=settings.contour_contrast,
+        geometry=settings.heatmap_geometry,arrangement=settings.heatmap_arrangement)
     _space_bottom_legends(fig, settings, size)
 
     def reflow_if_diurnal():
@@ -681,9 +684,13 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         set_period_axis_scope(fig,context=st.session_state.get("_p6_report_context"))
         from .heatmap_controls import local_heatmap_settings
         local=local_heatmap_settings(st,fig)
-        settings=replace(settings,heatmap_mode=local["mode"],contour_interval=local["interval"],
+        settings=replace(settings,heatmap_geometry=local["geometry"],heatmap_arrangement=local["arrangement"],
+                         heatmap_mode=local["mode"],contour_interval=local["interval"],
                          contour_labels=local["labels"],contour_width=local["width"],contour_contrast=local["contrast"])
         apply_chart_presentation(fig, settings)
+        from .circular_contours import STATUS as CIRCULAR_STATUS
+        status=(fig.layout.meta or {}).get(CIRCULAR_STATUS,{}) if isinstance(fig.layout.meta,dict) else {}
+        if status.get("reason"):st.caption("Circular tiles used: "+status["reason"])
         render_chart_editor(st,fig,edit_key)
         if any(t.type=="heatmap" for t in fig.data):
             meta=dict(fig.layout.meta) if isinstance(fig.layout.meta,dict) else {}

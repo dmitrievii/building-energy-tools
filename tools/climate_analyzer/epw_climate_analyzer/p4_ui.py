@@ -82,9 +82,9 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
     if style=="Event timeline":
         fig=event_timeline_figure(table,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
     elif style=="Duration and intensity":
-        fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color=event_color(quantity,above)),
-                        text=table.start.astype(str),customdata=table.excess,hovertemplate="%{text}<br>Duration %{x:g}<br>Peak %{y:.2f}<br>Integrated excess %{customdata:.2f}<extra></extra>")
-        fig.update_layout(title="Event duration and peak",xaxis_title="Duration ["+unit+"]",yaxis_title=quantity)
+        from .event_severity import bubble_figure,bubble_note
+        fig=bubble_figure(table,unit=unit,threshold=threshold,above=above,quantity=quantity)
+        extra_note=(extra_note+" "+bubble_note(table,unit=unit,above=above,quantity=quantity)).strip()
     else:
         d=table.duration.value_counts().sort_index()
         fig.add_bar(x=d.index,y=d,name="Number of events",marker_color=event_color(quantity,above))

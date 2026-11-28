@@ -10,7 +10,7 @@ GROUPS=(
     ("Climate source",("Climate File Source",)),
     ("Overview",("Overview",)),
     ("Climate",("Temperature","Humidity and Psychrometrics","Solar and Radiation","Wind and Ventilation","Sky and Daylight","Precipitation and Snow")),
-    ("Explore",("Time Series and Overlay","Compare Climates","Data Quality")),
+    ("Explore",("Time Series and Overlay","Climate Anomalies","Compare Climates","Data Quality")),
     ("Design",("Natural Ventilation","Shading analysis","HVAC and Passive Design","Outdoor Thermal Comfort")),
     ("Report",("Report",)),
 )
@@ -32,7 +32,7 @@ ICONS={
     "Temperature":"thermostat","Humidity and Psychrometrics":"humidity_percentage",
     "Solar and Radiation":"wb_sunny","Wind and Ventilation":"air",
     "Sky and Daylight":"partly_cloudy_day","Precipitation and Snow":"rainy",
-    "Time Series and Overlay":"show_chart","Compare Climates":"compare_arrows",
+    "Time Series and Overlay":"show_chart","Climate Anomalies":"monitoring","Compare Climates":"compare_arrows",
     "Data Quality":"database","Natural Ventilation":"window","Shading analysis":"wb_twilight",
     "HVAC and Passive Design":"home","Outdoor Thermal Comfort":"device_thermostat",
 }

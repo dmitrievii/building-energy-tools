@@ -481,6 +481,141 @@ try {
   report.checks.sidebarGeometry=true;
   await page.screenshot({path:OUT_DIR+'/13-sidebar-expanded.png',fullPage:true});
 
+  // Exercise the real per-chart geometry controls against all 8,760
+  // calendar positions, one of which is deliberately missing.
+  await page.goto(TARGET_URL+'?circular=1',{waitUntil:'domcontentloaded'});
+  const circularFrame=await appFrame(page,'Circular calendar geometry harness');
+  await circularFrame.getByText('Circular',{exact:true}).click();
+  await circularFrame.getByText('Tiles',{exact:true}).click();
+  async function circularMetrics(arrangement) {
+    await circularFrame.waitForFunction(({arrangement})=>{
+      const node=document.querySelector('.js-plotly-plot');
+      const t=node?._fullData?.find(t=>t.type==='barpolar'&&t.meta?.ige_circular_heatmap_layer);
+      if(!t||t.r?.length!==8759)return false;
+      const expected=arrangement==='Calendar angle'?180/365:7.5;
+      return Math.abs(Number(t.theta[0])-expected)<1e-6&&node.querySelectorAll('.polarlayer path').length>=8759;
+    },{arrangement},{timeout:90000});
+    return circularFrame.locator('.js-plotly-plot').first().evaluate(node=>{
+      const t=node._fullData.find(t=>t.type==='barpolar');
+      return {cells:t.r.length,firstAngle:Number(t.theta[0]),firstWidth:Number(t.width[0]),
+        paths:node.querySelectorAll('.polarlayer path').length,
+        canonicalHidden:node._fullData.find(t=>t.type==='heatmap')?.visible===false,
+        domain:[node._fullLayout.coloraxis.cmin,node._fullLayout.coloraxis.cmax],
+        northRotation:node._fullLayout.polar.angularaxis.rotation,
+        axisDirection:node._fullLayout.polar.angularaxis.direction};
+    });
+  }
+  const calendarAngle=await circularMetrics('Calendar angle');
+  assertNear(calendarAngle.firstWidth,360/365,1e-6,'Calendar annulus day width');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/14-circular-calendar-angle.png'});
+  await circularFrame.getByText('Clock-hour angle',{exact:true}).click();
+  const clockAngle=await circularMetrics('Clock-hour angle');
+  assertNear(clockAngle.firstWidth,15,1e-6,'Clock-hour annulus sector width');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/15-circular-clock-angle.png'});
+  for(const m of [calendarAngle,clockAngle]){
+    if(!m.canonicalHidden||m.domain[0]!==0||m.domain[1]!==8759||m.axisDirection!=='clockwise')
+      throw new Error('Circular canonical colour/geometry contract failed: '+JSON.stringify(m));
+  }
+  // Both circular modes use the same physical colour domain. Verify real
+  // SVG fill and line paths, not just Python-side trace presence.
+  async function contourMetrics(mode, arrangement) {
+    await circularFrame.getByText(mode,{exact:true}).click();
+    await circularFrame.waitForFunction(({mode,arrangement})=>{
+      const node=document.querySelector('.js-plotly-plot');
+      const status=node?._fullLayout?.meta?.ige_circular_contour_status;
+      const data=node?._fullData||[];
+      const line=data.find(t=>t.meta?.circular_contour_lines);
+      const bands=data.filter(t=>t.meta?.circular_contour_band);
+      const ticks=node?._fullLayout?.polar?.angularaxis?.ticktext||[];
+      return status?.mode===mode&&line&&
+        (arrangement==='Calendar angle'?ticks.includes('Jan'):ticks.includes('00:00'))&&
+        node.querySelectorAll('.polarlayer .js-line').length>0&&
+        (mode!=='Contours'||(bands.length>0&&node.querySelectorAll('.polarlayer .js-fill').length>0));
+    },{mode,arrangement},{timeout:90000});
+    return circularFrame.locator('.js-plotly-plot').first().evaluate(node=>{
+      const data=node._fullData;
+      return {status:node._fullLayout.meta.ige_circular_contour_status,
+        bands:data.filter(t=>t.meta?.circular_contour_band).length,
+        tiles:data.filter(t=>t.type==='barpolar').length,
+        width:data.find(t=>t.meta?.circular_contour_lines).line.width,
+        fills:node.querySelectorAll('.polarlayer .js-fill').length,
+        fillRules:Array.from(node.querySelectorAll('.polarlayer .js-fill')).map(p=>getComputedStyle(p).fillRule),
+        bounds:[node._fullLayout.coloraxis.cmin,node._fullLayout.coloraxis.cmax]};
+    });
+  }
+  const clockHybrid=await contourMetrics('Tiles + contour lines','Clock-hour angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/16-circular-clock-hybrid.png'});
+  const clockContours=await contourMetrics('Contours','Clock-hour angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/17-circular-clock-contours.png'});
+  await circularFrame.getByText('Calendar angle',{exact:true}).click();
+  const calendarHybrid=await contourMetrics('Tiles + contour lines','Calendar angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/18-circular-calendar-hybrid.png'});
+  const calendarContours=await contourMetrics('Contours','Calendar angle');
+  await circularFrame.locator('.js-plotly-plot').first().screenshot({path:OUT_DIR+'/19-circular-calendar-contours.png'});
+  for(const m of [clockHybrid,clockContours,calendarHybrid,calendarContours]){
+    if(m.bounds[0]!==0||m.bounds[1]!==8759||m.width!==.25||m.status.periodic||
+       (m.status.mode==='Contours'?(m.tiles!==0||m.fills<1||m.fillRules.some(v=>v!=='nonzero')):m.tiles!==1))
+       throw new Error('Circular contour visual contract failed: '+JSON.stringify(m));
+  }
+  report.metrics.circularContours={clockHybrid,clockContours,calendarHybrid,calendarContours};
+  report.checks.circularContours=true;
+  await circularFrame.getByText('Cartesian',{exact:true}).click();
+  await circularFrame.waitForFunction(()=>{
+    const d=document.querySelector('.js-plotly-plot')?._fullData;
+    return d?.some(t=>t.type==='heatmap'&&t.visible!==false)&&!d?.some(t=>t.type==='barpolar');
+  },null,{timeout:60000});
+  report.metrics.circularCalendar={calendarAngle,clockAngle};
+  report.checks.circularCalendar=true;
+
+  await page.goto(TARGET_URL+'?anomalies=1',{waitUntil:'domcontentloaded'});
+  const anomalyFrame=await waitForCharts(page,4);
+  const anomalyPlots=await anomalyFrame.locator('.js-plotly-plot').evaluateAll(nodes=>nodes.map(node=>({
+    types:node._fullData.map(t=>t.type),
+    reference:[node._fullLayout.meta?.reference_start,node._fullLayout.meta?.reference_end],
+    counts:node._fullLayout.meta?.reference_sample_counts,
+    // Plotly drops zmid from resolved trace defaults when explicit zmin/zmax
+    // disable auto-ranging. Qualify the actual rendered zero-centred domain
+    // and neutral colour stop instead of an unused optional property.
+    limits:[node._fullData[0]?.zmin,node._fullData[0]?.zmax],
+    neutralStop:node._fullData[0]?.colorscale?.find(s=>s[0]===0.5)?.[1],
+    annualYears:node._fullLayout.meta?.annual_reference_years,
+    envelope:node._fullData.some(t=>t.fill==='tonexty')
+  })));
+  if(anomalyPlots.some(m=>m.reference[0]!==1991||m.reference[1]!==2020||m.annualYears!==30||m.counts.some(n=>n!==30))
+     ||anomalyPlots[0].types[0]!=='bar'||!anomalyPlots[1].envelope
+     ||anomalyPlots[2].types[0]!=='heatmap'
+     ||!anomalyPlots[2].limits.every(Number.isFinite)
+     ||anomalyPlots[2].limits[0]>=0||anomalyPlots[2].limits[1]<=0
+     ||Math.abs(anomalyPlots[2].limits[0]+anomalyPlots[2].limits[1])>1e-8
+     ||!['#f7f7f7','rgb(247,247,247)'].includes(String(anomalyPlots[2].neutralStop).toLowerCase().replace(/\s/g,''))
+     ||anomalyPlots[3].types[0]!=='bar')
+    throw new Error('Historical anomaly visual reference contract failed: '+JSON.stringify(anomalyPlots));
+  report.metrics.climateAnomalies=anomalyPlots;
+  report.checks.climateAnomalies=true;
+  await page.screenshot({path:OUT_DIR+'/20-climate-anomalies.png',fullPage:true});
+
+  await page.goto(TARGET_URL+'?severity=1',{waitUntil:'domcontentloaded'});
+  const severityFrame=await waitForCharts(page,2);
+  const eventMetrics=await severityFrame.locator('.js-plotly-plot').first().evaluate(node=>{
+    const d=node._fullData;
+    return {size:Array.from(d[0].marker.size),mode:d[0].marker.sizemode,
+      zero:d[1].marker.symbol,unit:node._fullLayout.meta?.severity_unit,
+      points:node.querySelectorAll('.scatterlayer .point').length};
+  });
+  const cumulativeMetrics=await severityFrame.locator('.js-plotly-plot').nth(1).evaluate(node=>{
+    const d=node._fullData;
+    return {years:d.length,firstYear:Array.from(d[0].y),secondYear:Array.from(d[1].y),
+      connectgaps:d[1].connectgaps,kind:node._fullLayout.meta?.layout_kind};
+  });
+  if(eventMetrics.mode!=='area'||eventMetrics.size.join(',')!=='3,9'||eventMetrics.zero!=='circle-open'||eventMetrics.unit!=='K·d'||eventMetrics.points!==3)
+    throw new Error('Event severity marker contract failed: '+JSON.stringify(eventMetrics));
+  if(cumulativeMetrics.years!==2||cumulativeMetrics.firstYear[11]!==100||cumulativeMetrics.secondYear[0]!==200||
+      (cumulativeMetrics.secondYear[1]!=null&&Number.isFinite(cumulativeMetrics.secondYear[1]))||cumulativeMetrics.secondYear[2]!==500||cumulativeMetrics.connectgaps!==false)
+    throw new Error('Cumulative year-reset and gap contract failed: '+JSON.stringify(cumulativeMetrics));
+  report.metrics.eventSeverity=eventMetrics;
+  report.metrics.cumulativeResources=cumulativeMetrics;
+  report.checks.eventCumulative=true;
+  await page.screenshot({path:OUT_DIR+'/21-event-cumulative.png',fullPage:true});
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));

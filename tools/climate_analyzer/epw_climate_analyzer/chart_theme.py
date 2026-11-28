@@ -274,10 +274,15 @@ ORIENTATION_COLORS = {
 WIND_DIRECTION_COLUMNS = ("wind_direction_deg","wind_gust_direction_deg")
 WIND_DIRECTION_TICKS = tuple(range(0,361,45))
 WIND_DIRECTION_LABELS = ("N","NE","E","SE","S","SW","W","NW","N")
+# Dedicated high-contrast cyclic heat-map palette. Do not reuse the facade
+# orientation series colours: neighbouring blue/indigo sectors were difficult
+# to distinguish at hourly cell size. North closes the cycle exactly.
+WIND_DIRECTION_HEATMAP_COLORS = (
+    "#263DAB", "#008DA8", "#249C47", "#A9BB2B",
+    "#F4CE35", "#EE812B", "#CC3D61", "#8547B1", "#263DAB",
+)
 WIND_DIRECTION_COLORSCALE = [
-    [i/8, ORIENTATION_COLORS[key]]
-    for i,key in enumerate(("north","north-east","east","south-east","south",
-                           "south-west","west","north-west","north"))
+    [i/8, color] for i, color in enumerate(WIND_DIRECTION_HEATMAP_COLORS)
 ]
 
 METRIC_COLORS = {

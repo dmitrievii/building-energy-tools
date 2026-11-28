@@ -217,7 +217,7 @@ st.write(page)
 
     def test_explore_owns_comparison_and_quality_and_icons_cover_tree(self):
         groups=dict(nav.grouped_pages(NAVIGATION_PAGES))
-        self.assertEqual(groups["Explore"],("Time Series and Overlay","Compare Climates","Data Quality"))
+        self.assertEqual(groups["Explore"],("Time Series and Overlay","Climate Anomalies","Compare Climates","Data Quality"))
         self.assertNotIn("Compare Climates",groups)
         self.assertNotIn("Data Quality",groups)
         for group,members in groups.items():

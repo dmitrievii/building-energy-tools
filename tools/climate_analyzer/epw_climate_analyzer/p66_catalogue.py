@@ -109,6 +109,10 @@ def catalogue(df,context,coverage=FULL):
                     for kind in ("histogram","box","violin"):
                         add(chapter,label+" · "+{"histogram":"histogram","box":"monthly boxplot","violin":"monthly violin"}[kind]+suffix,kind,c,u,(basis,),ok=valid,reason="No wet observation intervals.")
                 if compatible_types(df,c):
+                    for grouping in (("Monthly",) if coverage==REP else ("Monthly","Seasonal")):
+                        for basis in bases:
+                            suffix=" · wet intervals" if basis=="wet" else " · all intervals" if c==P else ""
+                            add(chapter,f"{label} · {grouping.lower()} ridgeline"+suffix,"ridgeline",c,u,(grouping,basis),ok=basis!="wet" or base.numeric(df,c).gt(0).any(),reason="No wet observation intervals.")
                     for style in (("Overlay",) if coverage==REP else ("Overlay","Small multiples")):
                         for centre in (("mean","median") if coverage==FULL else ("mean",)):
                             for band in (("P05–P95","Min–max","None") if coverage==FULL else ("P05–P95",)):
@@ -123,11 +127,14 @@ def catalogue(df,context,coverage=FULL):
     for chapter,c,u in [(SOL,G,"kWh/m²"),(SOL,D,"kWh/m²"),(SOL,N,"kWh/m²"),(RAIN,P,"mm"),(RAIN,"precipitation_duration_min","h"),(SKY,"sunshine_duration_s","h")]:
         for period in (("Monthly",) if coverage==REP or monthly else TOTAL_PERIODS):
             add(chapter,f"{LABELS[c]} · total · {period}","total",c,u,(period,),ok=has(c))
+        add(chapter,f"{LABELS[c]} · cumulative annual profile","cumulative_resource",c,u,ok=has(c))
     for style in ("Walter–Lieth diagram","Climograph","Temperature–precipitation loop"):
         add(RAIN,style,"climate_summary",args=(style,),ok=has(T,P))
     for metric in ("Degree-days","Degree-hours"):
         for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS):
             add(TEMP,f"{metric} · {period}","degree",T,"K·d" if metric=="Degree-days" else "K·h",(metric,period),ok=hourly and has(T))
+    add(TEMP,"Heating and cooling · cumulative degree-hours","cumulative_degree",T,"K·h",ok=hourly and has(T))
+    add(NV,"Natural ventilation · cumulative suitable hours","cumulative_nv",args=(),ok=hourly and has(T,W))
     for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS[:-1]):
         add(TEMP,f"Temperature thresholds · {period}","temp_threshold",T,"h",(period,),ok=hourly and has(T))
     for stat in ("max","mean","min"):
@@ -250,6 +257,14 @@ def catalogue(df,context,coverage=FULL):
     add(OTC,"Mean radiant temperature · sun and shade","utci_pair_mrt",ok=pair_ok)
     for axis in ("Temperature–wind","Temperature–radiant offset","Wind–radiant offset"):
         add(OTC,"Controlled UTCI sensitivity · "+axis,"utci_sensitivity",args=(axis,),ok=hourly and has(T,RH,V))
+    # Shared sensitivity configurations are source gated; one reference
+    # grid per kind rather than enumerating every possible threshold pair.
+    from .threshold_sensitivity import SPECS as SENSITIVITY_SPECS
+    for kind,spec in SENSITIVITY_SPECS.items():
+        chapter=NV if kind.startswith("nv_") or kind.startswith("night") else SHADE if kind=="solar" else HUM if kind=="surface" else HVAC
+        source_ok=hourly and all(c in df and base.numeric(df,c).notna().any() for c in spec.fields)
+        add(chapter,spec.title,"threshold_sensitivity",args=(kind,),ok=source_ok)
+    add(SHADE,"Shading geometry · overhang and symmetric fins","shading_geometry_sensitivity",ok=solar_ok)
     years=sorted(set(df.index.year))
     for year in (years[-1:] if coverage==REP else years):
         add(RAIN,f"Snow-cover calendar · {year}","snow_calendar",S,"",(int(year),),ok=hourly and has(S))
@@ -258,6 +273,22 @@ def catalogue(df,context,coverage=FULL):
     for x,y in itertools.combinations(paired,2):
         for style in ("scatter","density"):
             add(REL,f"{LABELS[x]} × {LABELS[y]} · {style}","joint",x,UNITS[x],(y,style),ok=hourly)
+    # Anomaly figures are opt-in: the report must state a selected historical
+    # reference interval, never silently use the target period as climatology.
+    from .climate_anomalies import QUANTITIES as ANOMALY_QUANTITIES, VIEWS as ANOMALY_VIEWS, is_historical
+    reference=context.get("anomaly reference years") if isinstance(context,dict) else None
+    if reference and len(reference)==2 and is_historical(df):
+        lo,hi=map(int,reference)
+        for c in context.get("anomaly quantities",()):
+            if c not in ANOMALY_QUANTITIES or c not in df:continue
+            q=ANOMALY_QUANTITIES[c]
+            for view in (ANOMALY_VIEWS[2:] if coverage==REP else ANOMALY_VIEWS):
+                # One target-year example; complete history is represented by
+                # the interannual matrix and annual series at every coverage.
+                target_years=years[-1:] if view in ANOMALY_VIEWS[:2] else (None,)
+                for year in target_years:
+                    suffix=f" · {year}" if year is not None else ""
+                    add("Climate Anomalies",f"{q.label} · {view.lower()}{suffix} · reference {lo}–{hi}","climate_anomaly",c,q.anomaly_unit,(lo,hi,view,year))
     # Explicit unavailable/non-enumerated cases remain in the audit manifest.
     for chap,title,reason in [(TEMP,"Calculated ground-temperature depth animations","Requires EPW ground model or explicitly assigned measured profile; animation not static report."),(RAIN,"Empirical precipitation IDF","Requires independently verified native historical precipitation including ≥10 complete years."),(REL,"Critical event context viewer","Requires selected event and surrounding variables; arbitrary event combinations not enumerated."),("Compare Climates","Multi-climate comparison diagrams","Requires explicit comparison basket, not single active climate."),("Data Quality","Provider-specific diagnostic figures","Provider-specific diagnostics remain on Data Quality page.")]:
         add(chap,title,"not_registered",args=(title,),ok=False,reason=reason)

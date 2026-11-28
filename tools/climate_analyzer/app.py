@@ -2205,6 +2205,19 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
     if chart_type not in compatible_types(df,column):
         st.info("The selected representation requires supported subdaily observations.")
         return
+    if chart_type=="Ridgeline plot":
+        from epw_climate_analyzer.ridgeline import ridgeline_figure
+        from epw_climate_analyzer.p66_catalogue import LABELS
+        grouping=st.selectbox("Distribution grouping",["Monthly","Seasonal"],key=key_prefix+"_ridge_grouping")
+        bins=st.slider("Common distribution bins",10,100,40,5,key=key_prefix+"_ridge_bins")
+        quantiles=st.checkbox("Show median and P05–P95",value=True,key=key_prefix+"_ridge_quantiles")
+        wet_only=(st.radio("Distribution basis",["Wet intervals only","All intervals including dry periods"],horizontal=True,key=key_prefix+"_ridge_wet")=="Wet intervals only" if column=="liquid_precipitation_depth_mm" else False)
+        try:
+            fig,note=ridgeline_figure(df,column,unit,LABELS.get(column,column.replace("_"," ")),grouping=grouping,bins=bins,quantiles=quantiles,wet_only=wet_only)
+        except ValueError as exc:
+            st.info(str(exc));return
+        render_plot(fig,note)
+        return
     if chart_type=="Typical daily profile":
         represented=sorted(set(pd.DatetimeIndex(df.index).month))
         months=st.multiselect("Profile months", [m for m,n in MONTHS.items() if n in represented],
@@ -2355,7 +2368,7 @@ def render_generic_variable_page(
             column=column,args=(aggregation,))
         render_plot(fig,note)
         return
-    if chart_type in ("Typical daily profile","Monthly occurrence classes"):
+    if chart_type in ("Typical daily profile","Monthly occurrence classes","Ridgeline plot"):
         render_extended_variable_chart(df,column,unit,chart_type,key_prefix=scope)
         return
     chart_df = df
@@ -3485,6 +3498,13 @@ def _render_temperature_degree_days(df):
         index=2,
         key="degree_metric_aggregation",
     )
+    if metric=="Degree-hours":
+        representation=st.radio("Representation",["Period totals","Cumulative annual profile"],horizontal=True,key="r221_degree_representation")
+        if representation=="Cumulative annual profile":
+            from epw_climate_analyzer.cumulative_resources import degree_profile
+            try:render_plot(*degree_profile(df,heating_indoor_c=heating_indoor,heating_limit_c=heating_limit,cooling_indoor_c=cooling_indoor,cooling_limit_c=cooling_limit))
+            except ValueError as exc:st.info(str(exc))
+            return
     table = degree_metric_table(
         df,
         heating_indoor_c=heating_indoor,
@@ -3579,6 +3599,8 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         if complete(df,DEW):
             chart_options.append("Condensation potential")
         chart_options.append("Humidity persistence")
+        from epw_climate_analyzer.sensitivity_ui import available
+        if available(df,["surface"]):chart_options.append("Surface moisture sensitivity")
     chart_group = st.selectbox("Analysis type", chart_options, key="humidity_analysis_type")
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
@@ -3745,6 +3767,9 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
     elif chart_group == "Humidity persistence":
         from epw_climate_analyzer.p4_ui import persistence_panel
         persistence_panel(df,render_plot)
+    elif chart_group == "Surface moisture sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        panel(df,render_plot,["surface"],key="r221_surface")
     elif chart_group == "Condensation potential":
         from epw_climate_analyzer.p3_ui import condensation_panel
         condensation_panel(df,render_plot)
@@ -4270,17 +4295,28 @@ def render_shading_design(df: pd.DataFrame) -> None:
     if has_energy:
         options.append("Irradiation reduction")
         options.append("Façade orientation comparison")
+        options.append("Geometry sensitivity")
     if all(c in df and df[c].notna().any() for c in ("solar_azimuth_deg","solar_apparent_zenith_deg")):
         options.append("Seasonal and hourly shading")
         options.append("Geometric shading mask")
+    from epw_climate_analyzer.sensitivity_ui import available
+    if available(df,["solar"]):options.append("Climatic threshold sensitivity")
     if not options:
         st.info("Shading analysis requires site solar geometry or complete paired plane-of-array radiation inputs.")
         return
     if st.session_state.get("shading_design_analysis") not in options:
         st.session_state["shading_design_analysis"]=options[0]
     view=st.selectbox("Analysis type",options,key="shading_design_analysis")
+    if view=="Climatic threshold sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        panel(df,render_plot,["solar"],key="r221_solar")
+        return
     geometry=_shading_geometry("shading_analysis")
-    if view=="Irradiation reduction":
+    if view=="Geometry sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import geometry_panel
+        geometry_panel(df,render_plot,geometry=geometry,albedo=_active_solar_ground_albedo(df),key="r221_geometry")
+        _solar_ground_albedo_selection(df)
+    elif view=="Irradiation reduction":
         if "direct_normal_radiation_is_calculated" in df and df["direct_normal_radiation_is_calculated"].fillna(False).any():
             st.caption("DNI includes source-derived values calculated from GHI, DHI and solar zenith; measured GHI/DHI remain unchanged.")
         render_shading_analysis(df,_active_solar_ground_albedo(df),geometry=geometry)
@@ -5193,11 +5229,13 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
             "Reference eligibility",
             "Heat map",
             "Suitable hours by aggregation",
+            "Cumulative suitable hours",
             "Daily suitable-hours duration curve",
             "Rejected reasons",
             "Psychrometric NV overlay",
             "Night-flushing potential",
             "Continuous ventilation periods",
+            "Threshold sensitivity",
         ] + (["Temperature–wind suitability"] if wind_available else [])
           + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
@@ -5225,6 +5263,13 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
             df, stages, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
         ))
         st.dataframe(stages, hide_index=True, use_container_width=True)
+    elif chart_group == "Threshold sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        fixed=dict(t_min_c=t_min,t_max_c=t_max,d_max_g_kg=d_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max,
+                   occupied_only=occupied_only,occupied_start_hour=occupied_start,occupied_end_hour=occupied_end,weekdays_only=weekdays_only)
+        panel(df,render_plot,["nv_temperature_moisture","nv_temperature_range","nv_wind_range"],key="r221_nv",fixed=fixed,
+              references={"nv_temperature_moisture":(t_max,d_max),"nv_temperature_range":(t_min,t_max),
+                          "nv_wind_range":(wind_min if wind_min is not None else .5,wind_max if wind_max is not None else 6.)})
     elif chart_group == "Temperature–wind suitability":
         from epw_climate_analyzer.p3_ui import nv_sensitivity
         nv_sensitivity(df,eligibility_mask(df,mask,wind=wind_filter),wind_available,render_plot,
@@ -5315,6 +5360,12 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
         render_plot(fig, natural_ventilation_interpretation(
             df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
         ))
+    elif chart_group == "Cumulative suitable hours":
+        from epw_climate_analyzer.cumulative_resources import ventilation_profile
+        fixed=dict(t_min_c=t_min,t_max_c=t_max,d_max_g_kg=d_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max,
+                   occupied_only=occupied_only,occupied_start_hour=occupied_start,occupied_end_hour=occupied_end,weekdays_only=weekdays_only)
+        try:render_plot(*ventilation_profile(df,fixed=fixed))
+        except ValueError as exc:st.info(str(exc))
     elif chart_group == "Suitable hours by aggregation":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         counts = threshold_count_by_period(df, mask, aggregation, label="suitable_hours")
@@ -5338,11 +5389,14 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
     else:
         from epw_climate_analyzer.p3_ui import persistence_panel
         from epw_climate_analyzer.p3_comfort import numeric,T,full_daily_temperature
-        view=st.selectbox("Chart type",["Heat map","Nightly persistence"],key="p3_night_chart")
+        view=st.selectbox("Chart type",["Heat map","Nightly persistence","Threshold sensitivity"],key="p3_night_chart")
         hot=st.number_input("Preceding hot-day threshold [°C]",value=26.,step=.5,key="p3_night_hot")
         cool=st.number_input("Night temperature limit [°C]",value=20.,step=.5,key="p3_night_cool")
         night_mask = night_flushing_condition(df,day_hot_threshold_c=hot,night_max_c=cool)
-        if view=="Nightly persistence":
+        if view=="Threshold sensitivity":
+            from epw_climate_analyzer.sensitivity_ui import panel
+            panel(df,render_plot,["night","night_delta"],key="r221_night",references={"night":(hot,cool),"night_delta":(max(0.,hot-cool),cool)})
+        elif view=="Nightly persistence":
             days=pd.DatetimeIndex(df.index).normalize()
             anchor=days.where(df.index.hour>6,days-pd.DateOffset(days=1))
             complete=full_daily_temperature(df).reindex(anchor).notna().to_numpy()
@@ -5382,10 +5436,14 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
             "Design-day candidates",
             "Ventilation load proxy",
             "Adaptive comfort",
+            "Threshold sensitivity",
         ],
     )
 
-    if chart_group == "Passive strategy summary":
+    if chart_group == "Threshold sensitivity":
+        from epw_climate_analyzer.sensitivity_ui import panel
+        panel(df,render_plot,["neutral","economizer"],key="r221_passive")
+    elif chart_group == "Passive strategy summary":
         view = st.radio(
             "View",
             ["Annual totals", "Monthly strategy matrix"],
@@ -5460,11 +5518,14 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         h_return = st.slider("Return-air enthalpy reference [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
         mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
         chart = st.selectbox(
-            "Chart type", ["Eligible hours by period","Climatic screening stages"],
+            "Chart type", ["Eligible hours by period","Climatic screening stages","Threshold sensitivity"],
             key="hvac_economizer_chart",
         )
         finding=economizer_interpretation(df,h_return=h_return)
-        if chart=="Climatic screening stages":
+        if chart=="Threshold sensitivity":
+            from epw_climate_analyzer.sensitivity_ui import panel
+            panel(df,render_plot,["economizer"],key="r221_economizer",references={"economizer":(24.,h_return)})
+        elif chart=="Climatic screening stages":
             steps=economizer_stages(df,h_return=h_return)
             render_plot(economizer_stages_figure(steps),finding)
             st.dataframe(steps,hide_index=True,use_container_width=True)
@@ -6173,7 +6234,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         column = next(column for label, column, _ in specs if label == selected)
         from epw_climate_analyzer.extended_visualization import compatible_types, probability_figure
         chart_type = st.selectbox("Chart type", ["Profile", "Duration curve", "Month-hour heat map", "Histogram"]+compatible_types(solar,column), key="historical_solar_chart")
-        if chart_type in ("Typical daily profile","Monthly occurrence classes"):
+        if chart_type in ("Typical daily profile","Monthly occurrence classes","Ridgeline plot"):
             render_extended_variable_chart(solar,column,"W/m²",chart_type,key_prefix="historical_irradiance")
             return
         if chart_type == "Profile":
@@ -6262,6 +6323,7 @@ def render_canonical_climate_analysis(dataset) -> None:
         "Humidity and Psychrometrics",
         "Wind and Ventilation",
         "Time Series and Overlay",
+        "Climate Anomalies",
         "Natural Ventilation",
         "HVAC and Passive Design",
     }
@@ -6398,6 +6460,9 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_precipitation(filtered_df, native_df=native_precipitation_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(filtered_df)
+    elif page == "Climate Anomalies":
+        from epw_climate_analyzer.anomaly_ui import panel
+        panel(st,filtered_df,full_df,render_plot)
     else:
         render_canonical_data_quality(dataset, filtered_df)
 
@@ -6409,7 +6474,7 @@ def render_generated_climate_analysis(dataset) -> None:
     from epw_climate_analyzer.engine_display import prepare_engine_display_frame
     from epw_climate_analyzer.epw_parser import EpwFile, EpwLocation
 
-    pages = [p for p in NAVIGATION_PAGES if p != "Compare Climates"]
+    pages = [p for p in NAVIGATION_PAGES if p not in ("Compare Climates","Climate Anomalies")]
     if st.session_state.get(NAVIGATION_KEY) not in pages:
         st.session_state[NAVIGATION_KEY] = "Overview"
     page = _sidebar_layout.render_navigation(st,pages,globals().get("_r219_nav_area"))
@@ -6685,6 +6750,9 @@ def main() -> None:
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(filtered_df)
+    elif page == "Climate Anomalies":
+        st.header("Climate anomalies")
+        st.info("A typical-year EPW represents a reference weather year. Load a multi-year historical observation archive to calculate historical climate anomalies.")
     elif page == "Natural Ventilation":
         render_natural_ventilation(filtered_df, pressure_pa=active_pressure,reference_df=full_df)
     elif page == "HVAC and Passive Design":

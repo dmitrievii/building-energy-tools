@@ -347,8 +347,14 @@ def extensive_total_panel(df,render,*,columns):
     options={TOTAL_FIELDS[c][0]:c for c in columns if p.numeric(df,c).notna().any()}
     if not options:st.info("No valid observations for the selected accumulation.");return
     label=next(iter(options)) if len(options)==1 else st.selectbox("Quantity",list(options),key="extensive_total_quantity")
-    period=st.selectbox("Aggregation",list(PERIODS),key="extensive_total_period")
-    try:render(*extensive_total_figure(df,options[label],period))
+    representation=st.radio("Representation",["Period totals","Cumulative annual profile"],horizontal=True,key="r221_extensive_representation")
+    try:
+        if representation=="Cumulative annual profile":
+            from .cumulative_resources import extensive_profile
+            render(*extensive_profile(df,options[label]))
+        else:
+            period=st.selectbox("Aggregation",list(PERIODS),key="extensive_total_period")
+            render(*extensive_total_figure(df,options[label],period))
     except ValueError as exc:st.info(str(exc))
 
 
