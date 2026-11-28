@@ -119,8 +119,12 @@ def geometry_panel(df,render,*,geometry,albedo,key):
         render(fig,note+" The blue diamond identifies the selected candidate.")
     except ValueError as exc:
         st.info(str(exc));return
-    st.markdown("#### Selected candidate · interactive 3D")
-    st.plotly_chart(window_geometry_3d(**candidate),use_container_width=True,key=key+"_candidate_3d",
+    st.markdown("#### Selected candidate · geometry")
+    from .shading_sketch import window_shading_sketch
+    candidate_view=st.radio("Candidate geometry view",["Interactive 3D","Plan and elevation"],
+        horizontal=True,key=key+"_candidate_view")
+    preview=window_geometry_3d(**candidate) if candidate_view=="Interactive 3D" else window_shading_sketch(**candidate)
+    st.plotly_chart(preview,use_container_width=True,key=key+"_candidate_"+candidate_view,
                     config={"displaylogo":False,"scrollZoom":True})
     st.markdown("#### Architectural comparison")
     zero={**geometry,"overhang":0.,"left_fin":0.,"right_fin":0.}
