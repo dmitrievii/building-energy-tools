@@ -40,7 +40,8 @@ class ArchitecturalShadingTests(unittest.TestCase):
     def test_comparison_figure_serialization(self):
         cases=[("No shading",BASE),("Current",dict(BASE,overhang=.6)),("Candidate",dict(BASE,overhang=1.,left_fin=.5,right_fin=.5))]
         f=comparison_figure(cases,205.,45.,energy=[(0,800),(100,700),(250,550)])
-        self.assertIn("250.0 kWh/m² intercepted",f.to_json())
+        f.to_json()
+        self.assertTrue(any("250.0 kWh/m² intercepted" in a.text for a in f.layout.annotations))
         self.assertEqual(f.layout.xaxis.range,f.layout.xaxis3.range)
 
     def test_geometry_remaining_energy_and_candidate(self):
