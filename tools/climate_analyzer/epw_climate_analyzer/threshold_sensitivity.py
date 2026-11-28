@@ -251,8 +251,8 @@ def shading_geometry_figure(df,x,y,*,geometry,albedo=None,percentage=False,quant
     matrix=np.empty((len(y),len(x)))
     for i,fin in enumerate(y):
         for j,overhang in enumerate(x):
-            candidate={**base,"overhang":float(overhang),"left_fin":float(fin),"right_fin":float(fin)}
-            matrix[i,j]=np.dot(direct,shaded_fraction(az,el,**candidate))/1000.
+            cell_geometry={**base,"overhang":float(overhang),"left_fin":float(fin),"right_fin":float(fin)}
+            matrix[i,j]=np.dot(direct,shaded_fraction(az,el,**cell_geometry))/1000.
     remaining=incident_total-matrix
     z,label,upper={
         "remaining":(remaining,"Remaining total irradiation",incident_total),
@@ -286,6 +286,7 @@ def shading_geometry_figure(df,x,y,*,geometry,albedo=None,percentage=False,quant
           f"Remaining irradiation ranges from {remaining.min():,.2f} to {remaining.max():,.2f} kWh/m². "
           f"The active geometry intercepts {actual:,.2f} kWh/m² and retains {incident_total-actual:,.2f} kWh/m². "
           "Each cell uses equal left and right fin depths and the specified overhang; aperture dimensions and façade azimuth remain fixed. "
-          "Percentages refer to incident direct-beam irradiation. Diffuse and ground-reflected components retain the existing direct-only shading model.")
+          "Total reduction uses incident total irradiation; direct reduction uses incident direct irradiation. "
+          "Diffuse and ground-reflected components remain unchanged in the direct-beam shading model.")
     if not symmetric:note+=" The active geometry has unequal fin depths and is outside this symmetric-fin parameter family."
     return f,note
