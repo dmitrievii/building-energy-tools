@@ -84,11 +84,22 @@ def verify(output, contract_path, *, current_tree=False):
     contract,evidence=source_evidence(contract_path,current_tree=current_tree)
     (output/"source-evidence.json").write_text(json.dumps(evidence,indent=2)+"\n")
     expected_sources=evidence["current_sha256"]
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
     versions={}
     for line in (ROOT/'tools/climate_analyzer/requirements-cloud-constraints.txt').read_text().splitlines():
-        if '==' in line and not line.startswith('#'):
-            name,version=line.split('==');versions[name.lower().replace('_','-')]=version
-    installed={d.metadata['Name'].lower().replace('_','-'):d.version for d in metadata.distributions()}
+        line=line.strip()
+        if not line or line.startswith('#'):
+            continue
+        requirement=Requirement(line)
+        if requirement.marker is not None and not requirement.marker.evaluate():
+            continue
+        name=canonicalize_name(requirement.name)
+        specs=list(requirement.specifier)
+        assert len(specs)==1 and specs[0].operator=='==' and '*' not in specs[0].version, (name,line)
+        assert name not in versions, ("Multiple active pins",name)
+        versions[name]=specs[0].version
+    installed={canonicalize_name(d.metadata['Name']):d.version for d in metadata.distributions()}
     for name,version in versions.items():
         if name in installed:assert installed[name]==version,(name,version,installed[name])
     subprocess.run([sys.executable,'-m','pip','check'],cwd=ROOT,check=True)
